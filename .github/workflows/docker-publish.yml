@@ -3,10 +3,8 @@ name: Build and Push Docker Image
 on:
   push:
     branches:
-      - 'main'
       - 'master'
-    tags:
-      - 'v*'
+      - 'main'
 
 jobs:
   build-and-push:
@@ -33,4 +31,3 @@ jobs:
         push: true
         tags: |
           ${{ secrets.DOCKER_USERNAME }}/pm-backend:latest
-          ${{ secrets.DOCKER_USERNAME }}/pm-backend:${{ github.sha }}
