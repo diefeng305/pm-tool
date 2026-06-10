@@ -1,0 +1,52 @@
+services:
+  # MySQL 数据库服务
+  pm-db:
+    image: mysql:8.0
+    container_name: pm_mysql_container
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secure_pass_2026
+      MYSQL_DATABASE: pm_database
+      MYSQL_USER: pm_worker
+      MYSQL_PASSWORD: pm_worker_password_998
+    ports:
+      - "3306:3306"
+    volumes:
+      - pm_db_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - pm_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot_secure_pass_2026"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 后端 FastAPI 服务
+  pm-backend:
+    build: ./backend
+    container_name: pm_backend_container
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=pm-db
+      - DB_PORT=3306
+      - DB_NAME=pm_database
+      - DB_USER=pm_worker
+      - DB_PASSWORD=pm_worker_password_998
+    volumes:
+      - ./backend:/app
+    command: ["sh", "-c", "sleep 5 && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"]
+    depends_on:
+      pm-db:
+        condition: service_healthy
+    networks:
+      - pm_network
+
+volumes:
+  pm_db_data:
+
+networks:
+  pm_network:
+    driver: bridge

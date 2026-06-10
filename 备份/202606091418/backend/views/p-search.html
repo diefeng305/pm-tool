@@ -1,0 +1,470 @@
+<div class="search-container" style="font-family: system-ui, -apple-system, sans-serif;">
+    <!-- 页面头部 -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+        <div>
+            <h2 class="page-title" style="margin: 0 0 4px 0;">🔍 全局项目搜索</h2>
+            <p class="page-desc" style="margin: 0; color: #64748b;">支持多条件组合搜索，可同时搜索进行中项目与已归档项目</p>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <div style="background: #f1f5f9; border-radius: 8px; padding: 2px;">
+                <button id="listViewBtn" class="view-switch active" data-view="list" style="border: none; background: transparent; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 500;">📋 列表模式</button>
+                <button id="cardViewBtn" class="view-switch" data-view="card" style="border: none; background: transparent; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 500;">🃏 卡片模式</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索表单 -->
+    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+        <!-- 第一行：关键词 + 类别 + 标签 + 搜索范围 -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #334155;">🔎 关键词</label>
+                <input type="text" id="searchKeyword" placeholder="项目名称 / 编码 / 描述" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #334155;">🏷️ 产品类别</label>
+                <select id="searchCategory" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                    <option value="all">所有类别</option>
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #334155;">🔖 标签</label>
+                <input type="text" id="searchTag" placeholder="输入标签关键词" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #334155;">📂 搜索范围</label>
+                <select id="includeArchived" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                    <option value="true">全部项目（含归档）</option>
+                    <option value="false">仅进行中项目</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 分隔线 -->
+        <div style="border-top: 1px solid #e2e8f0; margin-bottom: 20px;"></div>
+
+        <!-- 创建时间区间 -->
+        <div style="margin-bottom: 16px;">
+            <div style="margin-bottom: 8px;">
+                <span style="font-size: 13px; font-weight: 600; color: #334155;">📅 创建时间区间</span>
+            </div>
+            <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 180px;">
+                    <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 4px;">起始日期</label>
+                    <input type="date" id="createdStart" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                </div>
+                <div style="flex: 1; min-width: 180px;">
+                    <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 4px;">结束日期</label>
+                    <input type="date" id="createdEnd" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- 出货时间区间 -->
+        <div style="margin-bottom: 16px;">
+            <div style="margin-bottom: 8px;">
+                <span style="font-size: 13px; font-weight: 600; color: #334155;">🚚 出货时间区间</span>
+            </div>
+            <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 180px;">
+                    <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 4px;">起始日期</label>
+                    <input type="date" id="shippingStart" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                </div>
+                <div style="flex: 1; min-width: 180px;">
+                    <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 4px;">结束日期</label>
+                    <input type="date" id="shippingEnd" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- 归档时间区间 -->
+        <div style="margin-bottom: 16px;">
+            <div style="margin-bottom: 8px;">
+                <span style="font-size: 13px; font-weight: 600; color: #334155;">✅ 归档时间区间</span>
+            </div>
+            <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 180px;">
+                    <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 4px;">起始日期</label>
+                    <input type="date" id="completedStart" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                </div>
+                <div style="flex: 1; min-width: 180px;">
+                    <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 4px;">结束日期</label>
+                    <input type="date" id="completedEnd" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; padding-top: 8px; border-top: 1px solid #e2e8f0;">
+            <button id="resetBtn" style="background: #e2e8f0; color: #475569; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 500;">重置</button>
+            <button id="searchBtn" style="background: #2563eb; color: white; border: none; padding: 8px 28px; border-radius: 8px; cursor: pointer; font-weight: 500;">🔍 开始搜索</button>
+        </div>
+    </div>
+
+    <!-- 搜索结果统计 -->
+    <div id="resultStats" style="margin-bottom: 16px; font-size: 14px; color: #64748b;"></div>
+
+    <!-- 搜索结果列表/卡片容器 -->
+    <div id="searchResultContainer" style="transition: all 0.2s;">
+        <div style="text-align: center; padding: 60px; color: #94a3b8;">请输入搜索条件后点击搜索</div>
+    </div>
+</div>
+
+<style>
+    .card-mode {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+    }
+    .project-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+        border: 1px solid #e2e8f0;
+        position: relative;
+    }
+    .project-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 20px -8px rgba(0,0,0,0.15);
+    }
+    .completed-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: #10b981;
+        color: white;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        z-index: 2;
+    }
+    .in-progress-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: #3b82f6;
+        color: white;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        z-index: 2;
+    }
+    .card-image {
+        height: 140px;
+        background-size: cover;
+        background-position: center;
+        background-color: #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 48px;
+        color: #94a3b8;
+    }
+    .card-body {
+        padding: 16px;
+    }
+    .card-title {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 6px;
+        color: #0f172a;
+        padding-right: 70px;
+    }
+    .card-code {
+        font-family: monospace;
+        font-size: 12px;
+        color: #64748b;
+        margin-bottom: 8px;
+    }
+    .card-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #475569;
+        margin-top: 12px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .list-mode {
+        overflow-x: auto;
+    }
+    .list-mode table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .list-mode th {
+        text-align: left;
+        padding: 12px 16px;
+        background: #f8fafc;
+        font-weight: 600;
+        color: #334155;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .list-mode td {
+        padding: 10px 16px;
+        border-bottom: 1px solid #f1f5f9;
+        cursor: pointer;
+        transition: background 0.1s;
+    }
+    .list-mode tr:hover td {
+        background: #f8fafc;
+    }
+    .view-switch.active {
+        background: white;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .empty-state {
+        text-align: center;
+        padding: 60px;
+        color: #94a3b8;
+    }
+    .status-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 11px;
+    }
+    .status-completed { background: #d1fae5; color: #065f46; }
+    .status-active { background: #dbeafe; color: #1e40af; }
+    .status-paused { background: #fef3c7; color: #92400e; }
+</style>
+
+<script>
+    (function() {
+        var container = document.getElementById('searchResultContainer');
+        var listViewBtn = document.getElementById('listViewBtn');
+        var cardViewBtn = document.getElementById('cardViewBtn');
+        var searchBtn = document.getElementById('searchBtn');
+        var resetBtn = document.getElementById('resetBtn');
+        var resultStats = document.getElementById('resultStats');
+
+        var currentProjects = [];
+        var currentView = 'list';
+
+        function loadCategoryOptions() {
+            fetch('/api/projects/categories')
+                .then(res => res.json())
+                .then(res => {
+                    if (res.code === 'SUCCESS' && res.data) {
+                        var select = document.getElementById('searchCategory');
+                        select.innerHTML = '<option value="all">所有类别</option>';
+                        res.data.forEach(function(cat) {
+                            var option = document.createElement('option');
+                            option.value = cat;
+                            option.textContent = cat;
+                            select.appendChild(option);
+                        });
+                    }
+                })
+                .catch(err => console.error('加载类别失败:', err));
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        // 重置所有搜索条件
+        function resetForm() {
+            document.getElementById('searchKeyword').value = '';
+            document.getElementById('searchCategory').value = 'all';
+            document.getElementById('searchTag').value = '';
+            document.getElementById('includeArchived').value = 'true';
+            document.getElementById('createdStart').value = '';
+            document.getElementById('createdEnd').value = '';
+            document.getElementById('shippingStart').value = '';
+            document.getElementById('shippingEnd').value = '';
+            document.getElementById('completedStart').value = '';
+            document.getElementById('completedEnd').value = '';
+            
+            // 清空搜索结果
+            container.innerHTML = '<div style="text-align: center; padding: 60px; color: #94a3b8;">请输入搜索条件后点击搜索</div>';
+            resultStats.innerHTML = '';
+            currentProjects = [];
+        }
+
+        function performSearch() {
+            var keyword = document.getElementById('searchKeyword').value;
+            var category = document.getElementById('searchCategory').value;
+            var tag = document.getElementById('searchTag').value;
+            var includeArchived = document.getElementById('includeArchived').value;
+            var createdStart = document.getElementById('createdStart').value;
+            var createdEnd = document.getElementById('createdEnd').value;
+            var shippingStart = document.getElementById('shippingStart').value;
+            var shippingEnd = document.getElementById('shippingEnd').value;
+            var completedStart = document.getElementById('completedStart').value;
+            var completedEnd = document.getElementById('completedEnd').value;
+
+            var params = new URLSearchParams();
+            if (keyword) params.append('keyword', keyword);
+            if (category && category !== 'all') params.append('category', category);
+            if (tag) params.append('tag', tag);
+            params.append('include_archived', includeArchived);
+            if (createdStart) params.append('created_start', createdStart);
+            if (createdEnd) params.append('created_end', createdEnd);
+            if (shippingStart) params.append('shipping_start', shippingStart);
+            if (shippingEnd) params.append('shipping_end', shippingEnd);
+            if (completedStart) params.append('completed_start', completedStart);
+            if (completedEnd) params.append('completed_end', completedEnd);
+
+            container.innerHTML = '<div style="text-align: center; padding: 40px;">⏳ 搜索中...</div>';
+            
+            fetch('/api/projects/search?' + params.toString())
+                .then(res => res.json())
+                .then(res => {
+                    if (res.code === 'SUCCESS') {
+                        currentProjects = res.data || [];
+                        if (currentProjects.length === 0) {
+                            resultStats.innerHTML = '📊 未找到符合条件的项目';
+                            container.innerHTML = '<div class="empty-state">📭 没有找到符合条件的项目</div>';
+                        } else {
+                            resultStats.innerHTML = '📊 找到 ' + currentProjects.length + ' 个项目';
+                            renderCurrentView();
+                        }
+                    } else {
+                        console.error('搜索失败:', res);
+                        container.innerHTML = '<div class="empty-state">❌ 搜索失败: ' + escapeHtml(res.detail) + '</div>';
+                        resultStats.innerHTML = '';
+                    }
+                })
+                .catch(function(err) {
+                    console.error('搜索错误:', err);
+                    container.innerHTML = '<div class="empty-state">❌ 网络错误: ' + escapeHtml(err.message) + '</div>';
+                    resultStats.innerHTML = '';
+                });
+        }
+
+        function renderCurrentView() {
+            if (!container) return;
+            if (currentView === 'list') {
+                renderListView();
+            } else {
+                renderCardView();
+            }
+        }
+
+        // 列表模式渲染（点击可打开项目详情）
+        function renderListView() {
+            if (!currentProjects.length) {
+                container.innerHTML = '<div class="empty-state">📭 没有找到符合条件的项目</div>';
+                return;
+            }
+            var html = '<div class="list-mode">' +
+                '<table><thead><tr>' +
+                '<th>项目编码</th><th>项目名称</th><th>类别</th><th>状态</th><th>创建日期</th><th>归档日期</th>' +
+                '</tr></thead><tbody>';
+            for (var i = 0; i < currentProjects.length; i++) {
+                var proj = currentProjects[i];
+                var safeCode = escapeHtml(proj.code);
+                var safeName = escapeHtml(proj.name);
+                var statusHtml = '';
+                if (proj.completed_date) {
+                    statusHtml = '<span class="status-badge status-completed">✅ 已完结</span>';
+                } else if (proj.status === '进行中') {
+                    statusHtml = '<span class="status-badge status-active">🟢 进行中</span>';
+                } else if (proj.status === '已暂停') {
+                    statusHtml = '<span class="status-badge status-paused">⏸ 已暂停</span>';
+                } else {
+                    statusHtml = '<span class="status-badge">⚪ ' + escapeHtml(proj.status || '未启动') + '</span>';
+                }
+                html += '<tr onclick="window.open(\'/project-detail?code=' + safeCode + '\', \'_blank\')" style="cursor:pointer;">' +
+                    '<td style="font-family: monospace;">' + safeCode + '</td>' +
+                    '<td><strong>' + safeName + '</strong></td>' +
+                    '<td>' + escapeHtml(proj.category || '-') + '</td>' +
+                    '<td>' + statusHtml + '</td>' +
+                    '<td>' + escapeHtml(proj.date || '-') + '</td>' +
+                    '<td>' + escapeHtml(proj.completed_date || '-') + '</td>' +
+                    '</tr>';
+            }
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
+        // 卡片模式渲染
+        function renderCardView() {
+            if (!currentProjects.length) {
+                container.innerHTML = '<div class="empty-state">📭 没有找到符合条件的项目</div>';
+                return;
+            }
+            var html = '<div class="card-mode">';
+            for (var i = 0; i < currentProjects.length; i++) {
+                var proj = currentProjects[i];
+                var imageBg = proj.image_url ? 'url(\'' + proj.image_url + '\')' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                var safeCode = escapeHtml(proj.code);
+                var safeName = escapeHtml(proj.name);
+                var badgeHtml = '';
+                if (proj.completed_date) {
+                    badgeHtml = '<div class="completed-badge">✅ 已完结</div>';
+                } else if (proj.status === '进行中') {
+                    badgeHtml = '<div class="in-progress-badge">🟢 进行中</div>';
+                } else if (proj.status === '已暂停') {
+                    badgeHtml = '<div class="in-progress-badge" style="background:#f59e0b;">⏸ 已暂停</div>';
+                }
+                html += '<div class="project-card" onclick="window.open(\'/project-detail?code=' + safeCode + '\', \'_blank\')">' +
+                    badgeHtml +
+                    '<div class="card-image" style="background: ' + imageBg + '; background-size: cover; background-position: center;">' +
+                    (proj.image_url ? '' : '📁') +
+                    '</div>' +
+                    '<div class="card-body">' +
+                    '<div class="card-title">' + safeName + '</div>' +
+                    '<div class="card-code">' + safeCode + '</div>' +
+                    '<div class="card-meta">' +
+                    '<span>🏷️ ' + escapeHtml(proj.category || '未分类') + '</span>' +
+                    '<span>📅 创建: ' + escapeHtml(proj.date || '-') + '</span>' +
+                    '</div>' +
+                    (proj.completed_date ? '<div class="card-meta"><span>✅ 完结: ' + escapeHtml(proj.completed_date) + '</span></div>' : '') +
+                    '</div></div>';
+            }
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function setView(view) {
+            currentView = view;
+            if (view === 'list') {
+                listViewBtn.classList.add('active');
+                cardViewBtn.classList.remove('active');
+            } else {
+                cardViewBtn.classList.add('active');
+                listViewBtn.classList.remove('active');
+            }
+            if (currentProjects.length > 0) {
+                renderCurrentView();
+            }
+        }
+
+        // 事件绑定
+        if (listViewBtn) listViewBtn.addEventListener('click', function() { setView('list'); });
+        if (cardViewBtn) cardViewBtn.addEventListener('click', function() { setView('card'); });
+        if (searchBtn) searchBtn.addEventListener('click', performSearch);
+        if (resetBtn) resetBtn.addEventListener('click', resetForm);
+
+        // 回车搜索
+        var searchInputs = ['searchKeyword', 'searchTag'];
+        searchInputs.forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') performSearch();
+                });
+            }
+        });
+
+        loadCategoryOptions();
+        setView('list');
+    })();
+</script>

@@ -1,0 +1,56 @@
+# Docker 相关
+*.log
+*.pid
+*.tmp
+.env
+.env.*
+docker-compose.override.yml
+
+# 数据库数据
+pm_db_data/
+*.sql
+*.db
+*.db-shm
+*.db-wal
+
+# 上传文件
+upload/
+uploads/
+*/upload/*
+*/uploads/*
+
+# Python 相关
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+
+# IDE 相关
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# 日志文件
+*.log
+logs/
+
+# 备份文件
+*.bak
+*.backup
+*.old
+
+# 本地配置
+local_config.py
+secrets.py
+
+# Node_modules（如果有）
+node_modules/

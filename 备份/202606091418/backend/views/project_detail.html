@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>加载中 - 项目详情</title>
+    <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 30px;
+            color: #1e293b;
+        }
+        .detail-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+        .three-column-layout {
+            display: flex;
+            gap: 0;
+        }
+        .left-sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            padding: 20px;
+            flex-shrink: 0;
+        }
+        .project-name-area {
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #2563eb;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .project-name-area h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.3;
+            text-align: left;
+            word-break: break-word;
+        }
+        .info-item {
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .info-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .info-value {
+            font-size: 14px;
+            color: #1e293b;
+            font-weight: 500;
+            word-break: break-word;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-active { background: #dbeafe; color: #1e40af; }
+        .status-completed { background: #d1fae5; color: #065f46; }
+        .status-paused { background: #fef3c7; color: #92400e; }
+        .priority-high { background: #fee2e2; color: #dc2626; }
+        .priority-medium { background: #fef3c7; color: #d97706; }
+        .priority-low { background: #e0f2fe; color: #0284c7; }
+        
+        .middle-content {
+            flex: 1;
+            background: #ffffff;
+            padding: 20px;
+            min-width: 0;
+        }
+        .image-section {
+            position: relative;
+            background-color: #0f172a;
+            width: 100%;
+            padding-bottom: 33.33%;
+            overflow: hidden;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .image-section .header-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            z-index: 0;
+        }
+        .image-section .image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.1) 100%);
+            z-index: 1;
+            border-radius: 12px;
+        }
+        .description-box {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 12px;
+            border-left: 4px solid #2563eb;
+            margin-bottom: 20px;
+        }
+        .description-box h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #0f172a;
+        }
+        .description-box p {
+            font-size: 14px;
+            color: #334155;
+            line-height: 1.6;
+        }
+        .requirements-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .requirements-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .requirements-header h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .add-req-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .req-list {
+            list-style: none;
+        }
+        .req-item {
+            background: white;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 10px;
+            border-left: 3px solid;
+        }
+        .req-item.original { border-left-color: #2563eb; background: #eff6ff; }
+        .req-item.supplement { border-left-color: #10b981; }
+        .req-text { font-size: 13px; margin-bottom: 5px; }
+        .req-meta { font-size: 11px; color: #64748b; display: flex; gap: 12px; }
+        .empty-reqs { color: #94a3b8; text-align: center; padding: 20px; font-size: 13px; }
+        
+        .milestones-section {
+            margin-top: 0;
+        }
+        .phase-container {
+            margin-bottom: 20px;
+        }
+        .phase-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            padding-left: 10px;
+            border-left: 3px solid;
+        }
+        .phase-title.前期 { border-left-color: #3b82f6; }
+        .phase-title.中期 { border-left-color: #f59e0b; }
+        .phase-title.后期 { border-left-color: #10b981; }
+        .milestone-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+        }
+        .milestone-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .milestone-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #cbd5e1;
+        }
+        .milestone-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+        .milestone-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .milestone-icon.not_started { background: #e2e8f0; color: #94a3b8; }
+        .milestone-icon.task_published { background: #fef3c7; color: #d97706; }
+        .milestone-icon.in_progress { background: #dbeafe; color: #2563eb; }
+        .milestone-icon.completed { background: #d1fae5; color: #10b981; }
+        .milestone-info {
+            flex: 1;
+        }
+        .milestone-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 2px;
+        }
+        .milestone-right {
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .milestone-status {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        .milestone-status.not_started { background: #e2e8f0; color: #64748b; }
+        .milestone-status.task_published { background: #fef3c7; color: #92400e; }
+        .milestone-status.in_progress { background: #dbeafe; color: #1e40af; }
+        .milestone-status.completed { background: #d1fae5; color: #065f46; }
+        .task-stats {
+            font-size: 10px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        
+        .right-sidebar {
+            width: 100px;
+            background: white;
+            border-left: 1px solid #e2e8f0;
+            padding: 20px 12px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .action-btn {
+            width: 100%;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .action-btn:hover {
+            background: #1d4ed8;
+        }
+        .toggle-btn {
+            background: #f59e0b;
+        }
+        .toggle-btn:hover {
+            background: #d97706;
+        }
+        .toggle-btn.paused {
+            background: #10b981;
+        }
+        .toggle-btn.paused:hover {
+            background: #059669;
+        }
+        .close-btn {
+            background: #64748b;
+        }
+        .close-btn:hover {
+            background: #475569;
+        }
+        
+        .modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .modal-container {
+            background: white;
+            border-radius: 16px;
+            width: 650px;
+            max-width: 90%;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+        }
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        .modal-buttons button {
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            border: none;
+        }
+        .modal-buttons .cancel {
+            background: #e2e8f0;
+        }
+        .modal-buttons .confirm {
+            background: #2563eb;
+            color: white;
+        }
+        .crop-container {
+            width: 100%;
+            max-height: 400px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .crop-container img {
+            max-width: 100%;
+        }
+        .crop-tip {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 8px;
+            padding: 8px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+        .task-modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .task-modal-container {
+            background: white;
+            border-radius: 16px;
+            width: 700px;
+            max-width: 90%;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+        }
+        .task-modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .task-modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .task-filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .task-filters select, .task-filters button {
+            padding: 6px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+        }
+        .task-filters button {
+            background: #2563eb;
+            color: white;
+            border: none;
+        }
+        .task-list {
+            list-style: none;
+        }
+        .task-item {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            border-left: 3px solid;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .task-item:hover {
+            background: #f1f5f9;
+        }
+        .task-item.pending { border-left-color: #94a3b8; }
+        .task-item.in_progress { border-left-color: #3b82f6; }
+        .task-item.completed { border-left-color: #10b981; opacity: 0.7; }
+        .task-item.delayed { border-left-color: #dc2626; }
+        .task-title {
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .task-meta {
+            font-size: 12px;
+            color: #64748b;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        .btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            border: none;
+        }
+        .btn-start { background: #3b82f6; color: white; }
+        .btn-complete { background: #10b981; color: white; }
+        .publish-task-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        .loading, .error { text-align: center; padding: 60px; }
+        .error { color: #dc2626; }
+        
+        /* 权限隐藏样式 */
+        .permission-hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="detail-container">
+        <div class="three-column-layout">
+            <!-- 左侧边栏 -->
+            <div class="left-sidebar" id="leftSidebar">
+                <div class="project-name-area" id="projectNameArea">
+                    <h1 id="projectTitle">项目详情</h1>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">📌 项目编码</div>
+                    <div class="info-value" id="projectCode">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">📊 状态</div>
+                    <div class="info-value" id="projectStatus">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">⚡ 优先级</div>
+                    <div class="info-value" id="projectPriority">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">🏷️ 类别</div>
+                    <div class="info-value" id="projectCategory">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">🔖 标签</div>
+                    <div class="info-value" id="projectTags">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">📅 创建日期</div>
+                    <div class="info-value" id="projectCreatedAt">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">🚚 出货日期</div>
+                    <div class="info-value" id="projectShippingDate">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">✅ 项目完结日期</div>
+                    <div class="info-value" id="projectCompletedDate">-</div>
+                </div>
+            </div>
+
+            <!-- 中间内容区 -->
+            <div class="middle-content">
+                <!-- 图片区域 - 3:1 比例 -->
+                <div class="image-section" id="imageSection">
+                    <img id="headerImage" class="header-image" src="" alt="项目图片" style="display: none;">
+                    <div class="image-overlay"></div>
+                </div>
+
+                <div class="description-box" id="descriptionBox">
+                    <h3>📖 项目描述</h3>
+                    <p id="projectDescription">加载中...</p>
+                </div>
+
+                <div class="requirements-section">
+                    <div class="requirements-header">
+                        <h3>📋 功能需求清单</h3>
+                        <button class="add-req-btn" id="addRequirementBtn">+ 添加补充需求</button>
+                    </div>
+                    <div id="requirementsList">
+                        <div class="empty-reqs">📭 暂无功能需求，点击上方按钮添加</div>
+                    </div>
+                </div>
+
+                <div class="milestones-section">
+                    <div id="milestonesContainer"></div>
+                </div>
+            </div>
+
+            <!-- 右侧窄边栏 -->
+            <div class="right-sidebar" id="rightSidebar">
+                <button id="toggleProjectBtn" class="action-btn toggle-btn">▶ 启动项目</button>
+                <button id="uploadImageBtn" class="action-btn">📷 添加图片</button>
+                <button class="action-btn close-btn" onclick="window.close()">关闭标签页</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var currentProjectCode = null;
+        var currentProjectData = null;
+        var currentMilestones = [];
+        var usersList = [];
+        var cropper = null;
+        var currentUserPermissions = [];
+
+        // ========== 权限控制函数 ==========
+        function getUserPermissions() {
+            var session = localStorage.getItem('pm_user_session');
+            if (session) {
+                try {
+                    var user = JSON.parse(session);
+                    currentUserPermissions = user.permissions || [];
+                    return currentUserPermissions;
+                } catch(e) { return []; }
+            }
+            return [];
+        }
+
+        function hasPermission(permission) {
+            var permissions = getUserPermissions();
+            return permissions.indexOf(permission) !== -1;
+        }
+
+        // 应用权限控制到界面元素
+        function applyPermissions() {
+            // 检查是否有编辑项目的权限（用于显示添加图片、添加需求、启动项目按钮）
+            var canEdit = hasPermission('create_project') || hasPermission('edit_project');
+            
+            if (!canEdit) {
+                var uploadBtn = document.getElementById('uploadImageBtn');
+                if (uploadBtn) uploadBtn.classList.add('permission-hidden');
+                
+                var addReqBtn = document.getElementById('addRequirementBtn');
+                if (addReqBtn) addReqBtn.classList.add('permission-hidden');
+                
+                var toggleBtn = document.getElementById('toggleProjectBtn');
+                if (toggleBtn) toggleBtn.classList.add('permission-hidden');
+            }
+        }
+
+        function getQueryParam(name) {
+            return new URLSearchParams(window.location.search).get(name);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        function openTaskDetailInNewTab(taskId) {
+            window.open('/task-detail?task_id=' + taskId, '_blank');
+        }
+
+        function loadUsers() {
+            return fetch('/api/projects/users/list-simple')
+                .then(function(res) { return res.json(); })
+                .then(function(res) {
+                    if (res.code === 'SUCCESS') usersList = res.data;
+                })
+                .catch(function(err) { console.error('加载用户列表失败:', err); });
+        }
+
+        window.refreshProjectMilestones = function(projectCode) {
+            if (projectCode === currentProjectCode) {
+                loadMilestones(currentProjectCode);
+                loadProjectData();
+            }
+        };
+
+        function loadProjectData() {
+            fetch('/api/projects/' + encodeURIComponent(currentProjectCode))
+                .then(function(res) { return res.json(); })
+                .then(function(res) {
+                    if (res.code === 'SUCCESS' && res.data) {
+                        currentProjectData = res.data;
+                        updateLeftSidebar(currentProjectData);
+                        updateImageSection(currentProjectData);
+                        updateDescription(currentProjectData);
+                        updateToggleButton(currentProjectData);
+                        renderRequirements(currentProjectData.requirements || []);
+                        syncNameAreaHeight();
+                    }
+                })
+                .catch(function(err) { console.error('加载项目数据失败:', err); });
+        }
+
+        function updateToggleButton(project) {
+            var toggleBtn = document.getElementById('toggleProjectBtn');
+            if (!toggleBtn) return;
+            
+            if (project.completed_date) {
+                toggleBtn.disabled = true;
+                toggleBtn.textContent = '🔒 已完结';
+                toggleBtn.style.opacity = '0.5';
+                toggleBtn.style.cursor = 'not-allowed';
+                return;
+            }
+            
+            toggleBtn.disabled = false;
+            toggleBtn.style.opacity = '1';
+            toggleBtn.style.cursor = 'pointer';
+            
+            if (project.status === '未启动' || project.status === '已暂停') {
+                toggleBtn.textContent = '▶ 启动项目';
+                toggleBtn.classList.remove('paused');
+                toggleBtn.style.background = '#10b981';
+            } else if (project.status === '进行中') {
+                toggleBtn.textContent = '⏸ 暂停项目';
+                toggleBtn.classList.add('paused');
+                toggleBtn.style.background = '#f59e0b';
+            } else {
+                toggleBtn.textContent = '▶ 启动项目';
+                toggleBtn.classList.remove('paused');
+                toggleBtn.style.background = '#10b981';
+            }
+        }
+
+        function toggleProjectStatus() {
+            if (!currentProjectData) return;
+            
+            var username = localStorage.getItem('pm_user_session') ? 
+                JSON.parse(localStorage.getItem('pm_user_session')).username : 'admin';
+            
+            fetch('/api/projects/' + currentProjectCode + '/toggle-status', {
+                method: 'POST',
+                headers: { 'X-Username': username }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(res) {
+                if (res.code === 'SUCCESS') {
+                    alert(res.message);
+                    loadProjectData();
+                    updateLeftSidebarStatus(res.status);
+                } else {
+                    alert('操作失败: ' + res.detail);
+                }
+            })
+            .catch(function(err) { alert('网络错误: ' + err.message); });
+        }
+
+        function updateLeftSidebarStatus(status) {
+            var statusElement = document.getElementById('projectStatus');
+            if (status === '进行中') {
+                statusElement.innerHTML = '<span class="status-badge status-active">🟢 进行中</span>';
+            } else if (status === '已暂停') {
+                statusElement.innerHTML = '<span class="status-badge status-paused">⏸ 已暂停</span>';
+            } else {
+                statusElement.innerHTML = '<span class="status-badge">⚪ 未启动</span>';
+            }
+        }
+
+        function syncNameAreaHeight() {
+            var imageSection = document.getElementById('imageSection');
+            var projectNameArea = document.getElementById('projectNameArea');
+            if (imageSection && projectNameArea) {
+                var imageHeight = imageSection.offsetHeight;
+                projectNameArea.style.minHeight = imageHeight + 'px';
+                projectNameArea.style.height = imageHeight + 'px';
+                projectNameArea.style.display = 'flex';
+                projectNameArea.style.flexDirection = 'column';
+                projectNameArea.style.justifyContent = 'center';
+            }
+        }
+
+        window.addEventListener('load', function() {
+            setTimeout(syncNameAreaHeight, 100);
+        });
+
+        window.addEventListener('resize', function() {
+            syncNameAreaHeight();
+        });
+
+        function updateLeftSidebar(project) {
+            document.getElementById('projectTitle').innerText = escapeHtml(project.name);
+            document.getElementById('projectCode').innerText = project.code || '-';
+            
+            var statusHtml = '';
+            if (project.completed_date) {
+                statusHtml = '<span class="status-badge status-completed">✅ 已完结</span>';
+            } else if (project.status === '进行中') {
+                statusHtml = '<span class="status-badge status-active">🟢 进行中</span>';
+            } else if (project.status === '已暂停') {
+                statusHtml = '<span class="status-badge status-paused">⏸ 已暂停</span>';
+            } else {
+                statusHtml = '<span class="status-badge">⚪ 未启动</span>';
+            }
+            document.getElementById('projectStatus').innerHTML = statusHtml;
+            
+            var priorityClass = '';
+            switch (project.priority) {
+                case '高': priorityClass = 'priority-high'; break;
+                case '中': priorityClass = 'priority-medium'; break;
+                default: priorityClass = 'priority-low';
+            }
+            document.getElementById('projectPriority').innerHTML = '<span class="' + priorityClass + '" style="padding:2px 8px; border-radius:20px;">' + escapeHtml(project.priority || '中') + '</span>';
+            
+            document.getElementById('projectCategory').innerText = project.category || '-';
+            document.getElementById('projectTags').innerText = project.tags || '-';
+            document.getElementById('projectCreatedAt').innerText = project.date || project.created_at || '-';
+            document.getElementById('projectShippingDate').innerText = project.shipping_date || '-';
+            document.getElementById('projectCompletedDate').innerText = project.completed_date || '未完结';
+        }
+
+        function updateImageSection(project) {
+            var imageSection = document.getElementById('imageSection');
+            var headerImage = document.getElementById('headerImage');
+            if (project.image_url) {
+                headerImage.src = project.image_url;
+                headerImage.style.display = 'block';
+                imageSection.style.backgroundColor = 'transparent';
+            } else {
+                headerImage.style.display = 'none';
+                imageSection.style.backgroundColor = '#0f172a';
+            }
+        }
+
+        function updateDescription(project) {
+            document.getElementById('projectDescription').innerText = project.description || '暂无描述';
+        }
+
+        function loadMilestones(projectCode) {
+            return fetch('/api/projects/' + encodeURIComponent(projectCode) + '/milestones')
+                .then(function(res) { return res.json(); })
+                .then(function(res) {
+                    if (res.code === 'SUCCESS') {
+                        currentMilestones = res.data;
+                        renderMilestones();
+                    }
+                })
+                .catch(function(err) { console.error('加载里程碑失败:', err); });
+        }
+
+        function renderMilestones() {
+            var container = document.getElementById('milestonesContainer');
+            if (!container) return;
+            
+            var phases = [
+                { name: '前期', key: '前期', icon: '🔍' },
+                { name: '中期', key: '中期', icon: '⚙️' },
+                { name: '后期', key: '后期', icon: '📦' }
+            ];
+            
+            var html = '';
+            for (var p = 0; p < phases.length; p++) {
+                var phase = phases[p];
+                var phaseMilestones = currentMilestones.filter(function(m) { return m.phase === phase.name; });
+                if (phaseMilestones.length === 0) continue;
+                
+                html += '<div class="phase-container">';
+                html += '<div class="phase-title ' + phase.name + '">' + phase.icon + ' ' + phase.name + '阶段</div>';
+                html += '<div class="milestone-grid">';
+                
+                for (var m = 0; m < phaseMilestones.length; m++) {
+                    var milestone = phaseMilestones[m];
+                    var statusText = '', statusClass = '';
+                    switch (milestone.status) {
+                        case 'not_started': statusText = '未开始'; statusClass = 'not_started'; break;
+                        case 'task_published': statusText = '已发布'; statusClass = 'task_published'; break;
+                        case 'in_progress': statusText = '进行中'; statusClass = 'in_progress'; break;
+                        case 'completed': statusText = '已完成'; statusClass = 'completed'; break;
+                        default: statusText = '未开始'; statusClass = 'not_started';
+                    }
+                    
+                    var statsHtml = '';
+                    if (milestone.task_stats && milestone.task_stats.total > 0) {
+                        statsHtml = '<div class="task-stats">📋 ' + milestone.task_stats.completed + '/' + milestone.task_stats.total + '</div>';
+                    }
+                    
+                    html += '<div class="milestone-card" onclick="openTaskModal(\'' + milestone.milestone_key + '\', \'' + escapeHtml(milestone.milestone_name) + '\')">';
+                    html += '<div class="milestone-left">';
+                    html += '<div class="milestone-icon ' + statusClass + '">' + (milestone.status === 'completed' ? '✓' : (milestone.status === 'not_started' ? '○' : '●')) + '</div>';
+                    html += '<div class="milestone-info">';
+                    html += '<div class="milestone-name">' + escapeHtml(milestone.milestone_name) + '</div>';
+                    html += statsHtml;
+                    html += '</div></div>';
+                    html += '<div class="milestone-right">';
+                    html += '<span class="milestone-status ' + statusClass + '">' + statusText + '</span>';
+                    html += '</div></div>';
+                }
+                html += '</div></div>';
+            }
+            container.innerHTML = html;
+        }
+
+        // 全局变量，用于权限控制
+        window.hasCreateTaskPermission = false;
+
+        function openTaskModal(milestoneKey, milestoneName) {
+            var existingModal = document.getElementById('taskModal');
+            if (existingModal) existingModal.remove();
+            
+            var publishBtnHtml = window.hasCreateTaskPermission ? 
+                '<button onclick="openPublishTaskModal(\'' + milestoneKey + '\', \'' + escapeHtml(milestoneName) + '\')" style="background:#10b981; padding:6px 12px; border:none; border-radius:6px; color:white; cursor:pointer;">+ 发布任务</button>' : 
+                '';
+            
+            var modalHtml = '<div id="taskModal" class="task-modal-mask">' +
+                '<div class="task-modal-container">' +
+                '<div class="task-modal-header">' +
+                '<h3>📋 ' + escapeHtml(milestoneName) + ' - 任务清单</h3>' +
+                '<button onclick="closeTaskModal()" style="background:none; border:none; font-size:24px; cursor:pointer;">&times;</button>' +
+                '</div>' +
+                '<div class="task-modal-body">' +
+                '<div class="task-filters">' +
+                '<select id="taskSortSelect">' +
+                '<option value="created_at">按时间(新到旧)</option>' +
+                '<option value="priority">按优先级(高到低)</option>' +
+                '<option value="due_date">按截止日期(近到远)</option>' +
+                '</select>' +
+                '<select id="taskPriorityFilter">' +
+                '<option value="all">全部优先级</option>' +
+                '<option value="high">高优先级</option>' +
+                '<option value="medium">中优先级</option>' +
+                '<option value="low">低优先级</option>' +
+                '</select>' +
+                '<button onclick="refreshTaskList(\'' + milestoneKey + '\', \'' + escapeHtml(milestoneName) + '\')">筛选</button>' +
+                publishBtnHtml +
+                '</div>' +
+                '<div id="taskListContainer"><div style="text-align:center; padding:40px;">加载中...</div></div>' +
+                '</div></div></div>';
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            refreshTaskList(milestoneKey, milestoneName);
+        }
+
+        function closeTaskModal() {
+            var modal = document.getElementById('taskModal');
+            if (modal) modal.remove();
+        }
+
+        function refreshTaskList(milestoneKey, milestoneName) {
+            var sortBy = document.getElementById('taskSortSelect') ? document.getElementById('taskSortSelect').value : 'created_at';
+            var priority = document.getElementById('taskPriorityFilter') ? document.getElementById('taskPriorityFilter').value : 'all';
+            
+            var url = '/api/projects/' + encodeURIComponent(currentProjectCode) + '/milestones/' + milestoneKey + '/tasks?sort_by=' + sortBy;
+            if (priority !== 'all') url += '&priority=' + priority;
+            
+            fetch(url)
+                .then(function(res) { return res.json(); })
+                .then(function(res) {
+                    var container = document.getElementById('taskListContainer');
+                    if (res.code === 'SUCCESS' && res.data) {
+                        var tasks = res.data;
+                        if (tasks.length === 0) {
+                            container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;">📭 暂无任务，点击上方按钮发布</div>';
+                            return;
+                        }
+                        var html = '<ul class="task-list">';
+                        for (var i = 0; i < tasks.length; i++) {
+                            var task = tasks[i];
+                            var priorityClass = '', priorityText = '';
+                            switch (task.priority) {
+                                case 'high': priorityClass = 'priority-high'; priorityText = '高'; break;
+                                case 'medium': priorityClass = 'priority-medium'; priorityText = '中'; break;
+                                default: priorityClass = 'priority-low'; priorityText = '低';
+                            }
+                            var statusText = '', statusClass = '';
+                            switch (task.status) {
+                                case 'pending': statusText = '待处理'; statusClass = 'pending'; break;
+                                case 'in_progress': statusText = '进行中'; statusClass = 'in_progress'; break;
+                                case 'completed': statusText = '已完成'; statusClass = 'completed'; break;
+                                case 'delayed': statusText = '已延误'; statusClass = 'delayed'; break;
+                            }
+                            
+                            html += '<li class="task-item ' + statusClass + '" onclick="openTaskDetailInNewTab(' + task.id + ')">';
+                            html += '<div class="task-title"><span>' + escapeHtml(task.title) + '</span><span class="priority-badge ' + priorityClass + '">' + priorityText + '</span></div>';
+                            html += '<div class="task-meta">';
+                            html += '<span>👤 ' + escapeHtml(task.assignee || '未指派') + '</span>';
+                            html += '<span>📅 ' + (task.due_date_str || '未设置') + '</span>';
+                            html += '<span>📌 ' + statusText + '</span>';
+                            html += '</div></li>';
+                        }
+                        html += '</ul>';
+                        container.innerHTML = html;
+                    } else {
+                        container.innerHTML = '<div class="error">加载失败</div>';
+                    }
+                })
+                .catch(function(err) {
+                    document.getElementById('taskListContainer').innerHTML = '<div class="error">网络错误</div>';
+                });
+        }
+
+        function openPublishTaskModal(milestoneKey, milestoneName) {
+            var modalHtml = '<div id="publishModal" class="task-modal-mask">' +
+                '<div class="task-modal-container" style="width:500px;">' +
+                '<div class="task-modal-header">' +
+                '<h3>📝 发布任务 - ' + escapeHtml(milestoneName) + '</h3>' +
+                '<button onclick="closePublishModal()" style="background:none; border:none; font-size:24px; cursor:pointer;">&times;</button>' +
+                '</div>' +
+                '<div class="task-modal-body">' +
+                '<div style="margin-bottom:16px;"><label style="display:block; margin-bottom:4px;">任务标题 *</label><input type="text" id="taskTitle" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"></div>' +
+                '<div style="margin-bottom:16px;"><label style="display:block; margin-bottom:4px;">指派人</label><select id="taskAssignee" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"><option value="">请选择</option>' + usersList.map(function(u) { return '<option value="' + escapeHtml(u.username) + '">' + escapeHtml(u.name || u.username) + '</option>'; }).join('') + '</select></div>' +
+                '<div style="margin-bottom:16px;"><label style="display:block; margin-bottom:4px;">优先级</label><select id="taskPriority" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"><option value="low">低</option><option value="medium" selected>中</option><option value="high">高</option></select></div>' +
+                '<div style="margin-bottom:16px;"><label style="display:block; margin-bottom:4px;">截止日期</label><input type="date" id="taskDueDate" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"></div>' +
+                '<div style="margin-bottom:16px;"><label style="display:block; margin-bottom:4px;">审核人（可多选）</label><select id="taskReviewers" multiple style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; min-height:80px;">' + usersList.map(function(u) { return '<option value="' + escapeHtml(u.username) + '">' + escapeHtml(u.name || u.username) + '</option>'; }).join('') + '</select><small style="color:#64748b;">按住 Ctrl 键可多选</small></div>' +
+                '<div style="display:flex; justify-content:flex-end; gap:12px;">' +
+                '<button onclick="closePublishModal()" class="cancel" style="background:#e2e8f0; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">取消</button>' +
+                '<button onclick="submitPublishTask(\'' + milestoneKey + '\', \'' + escapeHtml(milestoneName) + '\')" style="background:#2563eb; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">发布</button>' +
+                '</div></div></div></div>';
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function closePublishModal() {
+            var modal = document.getElementById('publishModal');
+            if (modal) modal.remove();
+        }
+
+        function submitPublishTask(milestoneKey, milestoneName) {
+            var title = document.getElementById('taskTitle').value.trim();
+            if (!title) {
+                alert('请输入任务标题');
+                return;
+            }
+            var assignee = document.getElementById('taskAssignee').value;
+            var priority = document.getElementById('taskPriority').value;
+            var dueDate = document.getElementById('taskDueDate').value;
+            var reviewersSelect = document.getElementById('taskReviewers');
+            var reviewers = [];
+            for (var i = 0; i < reviewersSelect.options.length; i++) {
+                if (reviewersSelect.options[i].selected) {
+                    reviewers.push(reviewersSelect.options[i].value);
+                }
+            }
+            
+            fetch('/api/projects/' + encodeURIComponent(currentProjectCode) + '/milestones/' + milestoneKey + '/publish-task', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: title, assignee: assignee, priority: priority, due_date: dueDate || null, reviewers: reviewers })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(res) {
+                if (res.code === 'SUCCESS') {
+                    alert('任务已发布');
+                    closePublishModal();
+                    refreshTaskList(milestoneKey, milestoneName);
+                    loadMilestones(currentProjectCode);
+                } else {
+                    alert('发布失败: ' + res.detail);
+                }
+            })
+            .catch(function(err) { alert('网络错误'); });
+        }
+
+        function renderRequirements(requirements) {
+            var container = document.getElementById('requirementsList');
+            if (!container) return;
+            if (!requirements || requirements.length === 0) {
+                container.innerHTML = '<div class="empty-reqs">📭 暂无功能需求，点击上方按钮添加</div>';
+                return;
+            }
+            var html = '<ul class="req-list">';
+            for (var i = 0; i < requirements.length; i++) {
+                var req = requirements[i];
+                var isOriginal = req.is_original === 1;
+                var itemClass = isOriginal ? 'req-item original' : 'req-item supplement';
+                var tagText = isOriginal ? '📌 原始需求' : '➕ 补充需求';
+                html += '<li class="' + itemClass + '">';
+                html += '<div class="req-text">' + escapeHtml(req.requirement) + '</div>';
+                html += '<div class="req-meta">';
+                html += '<span class="tag">' + tagText + '</span>';
+                html += '<span>👤 ' + escapeHtml(req.added_by) + '</span>';
+                html += '<span>🕐 ' + escapeHtml(req.added_at) + '</span>';
+                html += '</div></li>';
+            }
+            html += '</ul>';
+            container.innerHTML = html;
+        }
+
+        function showCropModal(file) {
+            var img = new Image();
+            img.onload = function() {
+                var width = img.width;
+                var height = img.height;
+                var ratio = width / height;
+                var targetRatio = 3;
+                
+                if (Math.abs(ratio - targetRatio) > 0.1) {
+                    if (!confirm('当前图片比例约为 ' + ratio.toFixed(2) + ':1，推荐使用 3:1 比例。\n是否继续裁剪？')) {
+                        return;
+                    }
+                }
+                
+                var modalHtml = '<div id="cropModal" class="modal-mask" onclick="if(event.target===this) closeCropModal()">' +
+                    '<div class="modal-container">' +
+                    '<div class="modal-header"><h3>✂️ 裁剪图片</h3><button onclick="closeCropModal()" style="background:none; border:none; font-size:24px; cursor:pointer;">&times;</button></div>' +
+                    '<div class="modal-body"><div class="crop-container"><img id="cropImage" src="' + URL.createObjectURL(file) + '" style="max-width:100%;"></div>' +
+                    '<div class="crop-tip">💡 提示：请将图片裁剪为 3:1 比例（宽度:高度 = 3:1）。<br>推荐尺寸：1200x400 像素，最大宽度 1920x640。<br>图片将显示在项目顶部作为背景图。</div></div>' +
+                    '<div class="modal-footer"><button class="cancel" onclick="closeCropModal()">取消</button><button class="confirm" id="confirmCropBtn">确认上传</button></div></div></div>';
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                
+                var cropImage = document.getElementById('cropImage');
+                if (cropper) cropper.destroy();
+                
+                cropImage.onload = function() {
+                    cropper = new Cropper(cropImage, {
+                        aspectRatio: 3,
+                        viewMode: 1,
+                        dragMode: 'move',
+                        cropBoxResizable: true,
+                        background: false,
+                        autoCropArea: 0.9
+                    });
+                };
+                if (cropImage.complete) {
+                    cropImage.onload();
+                }
+                
+                document.getElementById('confirmCropBtn').addEventListener('click', function() {
+                    if (cropper) {
+                        var canvas = cropper.getCroppedCanvas({ width: 1200, height: 400 });
+                        canvas.toBlob(function(blob) {
+                            uploadCroppedImage(blob);
+                        }, 'image/jpeg', 0.9);
+                    }
+                });
+            };
+            img.src = URL.createObjectURL(file);
+        }
+
+        function closeCropModal() {
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            var modal = document.getElementById('cropModal');
+            if (modal) modal.remove();
+        }
+
+        function uploadCroppedImage(blob) {
+            var formData = new FormData();
+            formData.append('file', blob, 'cropped_image.jpg');
+            
+            var username = localStorage.getItem('pm_user_session') ? 
+                JSON.parse(localStorage.getItem('pm_user_session')).username : 'admin';
+            
+            fetch('/api/projects/' + currentProjectCode + '/upload-image', {
+                method: 'POST',
+                headers: { 'X-Username': username },
+                body: formData
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(res) {
+                if (res.code === 'SUCCESS') {
+                    alert('图片上传成功');
+                    closeCropModal();
+                    location.reload();
+                } else {
+                    alert('上传失败: ' + res.detail);
+                }
+            })
+            .catch(function(err) { alert('网络错误: ' + err.message); });
+        }
+
+        // 添加需求弹窗
+        document.getElementById('addRequirementBtn').addEventListener('click', function() {
+            var modalHtml = '<div id="reqModal" class="modal-mask">' +
+                '<div class="modal-container" style="width:450px;">' +
+                '<div class="modal-header"><h3>➕ 添加补充需求</h3><button onclick="closeRequirementModal()" style="background:none; border:none; font-size:24px; cursor:pointer;">&times;</button></div>' +
+                '<div class="modal-body"><textarea id="newRequirement" rows="4" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px;" placeholder="请输入新增的功能需求..."></textarea></div>' +
+                '<div class="modal-footer"><button class="cancel" onclick="closeRequirementModal()">取消</button><button class="confirm" onclick="submitRequirement()">确认添加</button></div></div></div>';
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        });
+
+        function closeRequirementModal() {
+            var modal = document.getElementById('reqModal');
+            if (modal) modal.remove();
+        }
+
+        function submitRequirement() {
+            var textarea = document.getElementById('newRequirement');
+            var requirement = textarea ? textarea.value.trim() : '';
+            if (!requirement) {
+                alert('请输入需求内容');
+                return;
+            }
+            var username = localStorage.getItem('pm_user_session') ? JSON.parse(localStorage.getItem('pm_user_session')).username : 'admin';
+            fetch('/api/projects/' + encodeURIComponent(currentProjectCode) + '/add-requirement', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Username': username },
+                body: JSON.stringify({ requirement: requirement })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(res) {
+                if (res.code === 'SUCCESS') {
+                    alert('需求已添加');
+                    closeRequirementModal();
+                    loadProjectData();
+                } else {
+                    alert('添加失败: ' + (res.detail || '未知错误'));
+                }
+            })
+            .catch(function(err) { alert('网络错误: ' + err.message); });
+        }
+
+        // 图片上传按钮
+        var uploadBtn = document.getElementById('uploadImageBtn');
+        if (uploadBtn) {
+            uploadBtn.addEventListener('click', function() {
+                var input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/jpeg,image/png,image/gif,image/webp';
+                input.onchange = function(e) {
+                    var file = e.target.files[0];
+                    if (!file) return;
+                    showCropModal(file);
+                };
+                input.click();
+            });
+        }
+
+        // 项目启动/暂停按钮
+        var toggleBtn = document.getElementById('toggleProjectBtn');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function() {
+                toggleProjectStatus();
+            });
+        }
+
+        // 主加载函数
+        var projectCode = getQueryParam('code');
+        if (!projectCode) {
+            document.getElementById('descriptionBox').innerHTML = '<div class="error">❌ 未指定项目编码</div>';
+        } else {
+            currentProjectCode = projectCode;
+            
+            // 获取用户权限并设置全局变量
+            getUserPermissions();
+            window.hasCreateTaskPermission = hasPermission('create_task');
+            
+            loadUsers();
+            loadProjectData();
+            loadMilestones(projectCode);
+            applyPermissions();
+        }
+    </script>
+</body>
+</html>

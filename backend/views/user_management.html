@@ -1,0 +1,543 @@
+<div class="user-management-container" style="padding: 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+        <h2 style="margin: 0; font-size: 20px; color: #333;">👥 系统用户管理</h2>
+        <button onclick="openAddUserModal()" style="background-color: #007bff; color: white; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <span>➕</span> 添加新员工账号
+        </button>
+    </div>
+
+    <div style="background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 900px;">
+            <thead>
+                <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6; color: #495057;">
+                    <th style="padding: 14px;">用户名</th>
+                    <th style="padding: 14px;">姓名</th>
+                    <th style="padding: 14px;">性别</th>
+                    <th style="padding: 14px;">用户类型</th>
+                    <th style="padding: 14px;">职位</th>
+                    <th style="padding: 14px;">邮箱/电话</th>
+                    <th style="padding: 14px;">状态</th>
+                    <th style="padding: 14px; text-align: center;">操作</th>
+                </tr>
+            </thead>
+            <tbody id="userTableBody">
+                <tr><td colspan="8" style="text-align: center; padding: 30px; color: #999;">正在加载用户花名册......</td></tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- 调试信息显示区域 -->
+    <div id="debugInfo" style="margin-top: 16px; padding: 12px; background: #f0f0f0; border-radius: 6px; font-size: 12px; color: #666;">
+        <strong>🔧 调试信息：</strong>
+        <div id="debugContent"></div>
+    </div>
+</div>
+
+<!-- 添加/编辑用户弹窗（包含权限配置） -->
+<div id="userModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
+    <div style="background-color: white; border-radius: 8px; width: 750px; max-height: 85vh; overflow-y: auto; box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
+        <div style="padding: 16px 20px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa;">
+            <h3 id="modalTitle" style="margin: 0; font-size: 16px; color: #333;">添加用户</h3>
+            <span onclick="closeUserModal()" style="cursor: pointer; font-size: 20px; color: #aaa; font-weight: bold;">&times;</span>
+        </div>
+        <div style="padding: 20px;">
+            <form id="userForm" onsubmit="submitUserForm(event)" style="display: flex; flex-direction: column; gap: 14px;">
+                <div style="display: flex; gap: 14px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 13px; color: #666; margin-bottom: 4px; font-weight: bold;">用户名 *</label>
+                        <input type="text" id="formUsername" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 13px; color: #666; margin-bottom: 4px; font-weight: bold;">登录密码 <span id="pwdRequiredStar">*</span></label>
+                        <input type="password" id="formPassword" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="创建必填/修改不填则不改">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 14px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 13px; color: #666; margin-bottom: 4px; font-weight: bold;">真实姓名</label>
+                        <input type="text" id="formName" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 13px; color: #666; margin-bottom: 4px; font-weight: bold;">性别</label>
+                        <select id="formGender" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            <option value="男">男</option>
+                            <option value="女">女</option>
+                            <option value="保密">保密</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 14px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 13px; color: #666; margin-bottom: 4px; font-weight: bold;">用户类型 *</label>
+                        <select id="formUserType" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" onchange="onUserTypeChange()">
+                            <option value="user">普通用户</option>
+                            <option value="admin">系统管理员</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 13px; color: #666; margin-bottom: 4px; font-weight: bold;">职位</label>
+                        <input type="text" id="formPosition" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="例如: 机械工程师">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 14px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 13px; color: #666; margin-bottom: 4px; font-weight: bold;">电子邮箱</label>
+                        <input type="email" id="formEmail" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 13px; color: #666; margin-bottom: 4px; font-weight: bold;">联系电话</label>
+                        <input type="text" id="formPhone" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                </div>
+
+                <!-- 权限配置区域 -->
+                <div style="background-color: #f8f9fa; padding: 14px; border-radius: 6px; border: 1px solid #e9ecef;">
+                    <label style="display: block; font-size: 13px; color: #495057; margin-bottom: 10px; font-weight: bold;">🔐 系统权限配置</label>
+                    <div id="permissionsCheckboxGroup" style="display: flex; flex-wrap: wrap; gap: 12px;">
+                        <!-- 权限复选框会动态加载 -->
+                    </div>
+                    <div style="font-size: 11px; color: #999; margin-top: 8px;">💡 提示：管理员可在此直接修改用户权限，保存后立即生效</div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; border-top: 1px solid #dee2e6; padding-top: 14px;">
+                    <button type="button" onclick="closeUserModal()" style="background-color: #6c757d; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer;">取消</button>
+                    <button type="submit" style="background-color: #28a745; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentEditUsername = null;
+    let currentEditUserType = null;
+    
+    // 前端直接定义权限列表
+    const ALL_PERMISSIONS = {
+        "create_project": {"name": "创建项目", "description": "新建项目和编辑项目信息"},
+        "delete_project": {"name": "删除项目", "description": "删除项目（谨慎操作）"},
+        "create_task": {"name": "创建任务", "description": "发布和指派任务"},
+        "delete_task": {"name": "删除任务", "description": "删除任务（谨慎操作）"},
+        "audit_flow": {"name": "流程审批", "description": "审核任务完成和退回"},
+        "manage_users": {"name": "用户管理", "description": "添加、编辑、删除用户账号"},
+        "view_all_projects": {"name": "查看所有项目", "description": "查看系统中所有项目"},
+        "system_settings": {"name": "系统设置", "description": "修改系统配置参数"}
+    };
+
+    function showDebug(msg) {
+        const debugContent = document.getElementById('debugContent');
+        if (debugContent) {
+            const time = new Date().toLocaleTimeString();
+            debugContent.innerHTML = `<div>[${time}] ${msg}</div>` + debugContent.innerHTML;
+            if (debugContent.children.length > 20) {
+                while (debugContent.children.length > 20) {
+                    debugContent.removeChild(debugContent.lastChild);
+                }
+            }
+        }
+        console.log(msg);
+    }
+
+    function fetchUserList() {
+        showDebug('正在加载用户列表...');
+        fetch('/api/users/list')
+            .then(res => res.json())
+            .then(res => {
+                if (res.code === "SUCCESS") {
+                    showDebug(`成功加载 ${res.data.length} 个用户`);
+                    res.data.forEach(user => {
+                        showDebug(`用户 ${user.username} 权限: ${JSON.stringify(user.permissions || [])}`);
+                    });
+                    renderUserTable(res.data);
+                } else {
+                    showDebug(`加载失败: ${res.detail || res.message}`);
+                    alert("加载失败: " + (res.detail || res.message));
+                }
+            })
+            .catch(err => {
+                showDebug(`网络错误: ${err.message}`);
+                alert("无法连接服务器获取用户列表");
+            });
+    }
+
+    function renderUserTable(users) {
+        const tbody = document.getElementById('userTableBody');
+        tbody.innerHTML = '';
+
+        if (users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color:#999;">暂无账号数据</td></tr>';
+            return;
+        }
+
+        users.forEach(user => {
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = "1px solid #dee2e6";
+            
+            const statusBadge = user.is_active === 1 
+                ? '<span style="background-color: #e2f0d9; color: #385723; padding: 4px 10px; border-radius: 20px; font-size: 12px;">使用中</span>'
+                : '<span style="background-color: #fce4d6; color: #c65911; padding: 4px 10px; border-radius: 20px; font-size: 12px;">已停用</span>';
+
+            const typeBadge = user.user_type === 'admin'
+                ? '<span style="background-color: #e8f0fe; color: #1a73e8; padding: 2px 8px; border-radius: 4px; font-size: 12px;">管理员</span>'
+                : '<span style="background-color: #f1f3f5; color: #666; padding: 2px 8px; border-radius: 4px; font-size: 12px;">普通用户</span>';
+
+            const permCount = (user.permissions || []).length;
+            const permBadge = permCount > 0 ? `<span style="background-color: #e3f2fd; color: #1565c0; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 6px;">${permCount}项权限</span>` : '<span style="background-color: #fff3e0; color: #e65100; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 6px;">无权限</span>';
+
+            let actionButtonsHtml = '';
+            if (user.username !== 'admin') {
+                const toggleText = user.is_active === 1 ? '停用' : '启用';
+                const toggleColor = user.is_active === 1 ? '#dc3545' : '#28a745';
+                
+                actionButtonsHtml = `
+                    <button onclick='openEditUserModal(${JSON.stringify(user)})' style="background-color: #ffc107; color: #212529; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">编辑</button>
+                    <button onclick="toggleUserStatus('${user.username}')" style="background: none; border: 1px solid ${toggleColor}; color: ${toggleColor}; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">${toggleText}</button>
+                    <button onclick="executeDeleteUser('${user.username}')" style="background-color: #dc2626; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">删除</button>
+                `;
+            } else {
+                actionButtonsHtml = `
+                    <button onclick='openEditUserModal(${JSON.stringify(user)})' style="background-color: #ffc107; color: #212529; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">编辑</button>
+                    <span style="color:#bbb; font-size:12px; margin-left:8px;">🛡️ 保护</span>
+                `;
+            }
+
+            tr.innerHTML = `
+                <td style="padding: 12px; font-weight: bold;">${escapeHtml(user.username)}${permBadge}</td>
+                <td style="padding: 12px;">${escapeHtml(user.name || '--')}</td>
+                <td style="padding: 12px;">${escapeHtml(user.gender || '保密')}</td>
+                <td style="padding: 12px;">${typeBadge}</td>
+                <td style="padding: 12px;">${escapeHtml(user.position || '--')}</td>
+                <td style="padding: 12px; font-size: 12px;">${escapeHtml(user.email || '')}<br>${escapeHtml(user.phone || '')}</td>
+                <td style="padding: 12px;">${statusBadge}</td>
+                <td style="padding: 12px; text-align: center;">
+                    <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;">
+                        ${actionButtonsHtml}
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function executeDeleteUser(username) {
+        if (!confirm(`⚠️ 确定要彻底删除用户 【${username}】 吗？此操作不可逆！`)) {
+            return;
+        }
+        fetch(`/api/users/delete/${username}`, { method: 'DELETE' })
+            .then(res => res.json())
+            .then(res => {
+                if (res.code === "SUCCESS") {
+                    alert("用户已删除");
+                    fetchUserList();
+                } else {
+                    alert("删除失败: " + (res.detail || "未知错误"));
+                }
+            })
+            .catch(err => alert("网络错误"));
+    }
+
+    function renderPermissionCheckboxes(containerId, selectedPermissions) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        showDebug(`渲染权限复选框，选中项: ${JSON.stringify(selectedPermissions)}`);
+        
+        let html = '';
+        for (const [key, perm] of Object.entries(ALL_PERMISSIONS)) {
+            const checked = selectedPermissions.includes(key) ? 'checked' : '';
+            html += `
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: white; padding: 6px 12px; border-radius: 20px; border: 1px solid #e0e0e0;">
+                    <input type="checkbox" value="${key}" ${checked} style="cursor: pointer;">
+                    <span style="font-size: 12px;">
+                        <strong>${escapeHtml(perm.name)}</strong>
+                        <span style="color: #888; margin-left: 4px;">(${escapeHtml(perm.description)})</span>
+                    </span>
+                </label>
+            `;
+        }
+        container.innerHTML = html;
+    }
+
+    function getSelectedPermissions(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return [];
+        const checkboxes = container.querySelectorAll('input[type="checkbox"]:checked');
+        const selected = Array.from(checkboxes).map(cb => cb.value);
+        showDebug(`获取选中的权限: ${JSON.stringify(selected)}`);
+        return selected;
+    }
+
+    function onUserTypeChange() {
+        const userType = document.getElementById('formUserType').value;
+        if (userType === 'admin') {
+            const container = document.getElementById('permissionsCheckboxGroup');
+            if (container) {
+                const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(cb => cb.checked = true);
+                showDebug('用户类型切换为管理员，自动全选所有权限');
+            }
+        }
+    }
+
+    function openAddUserModal() {
+        currentEditUsername = null;
+        currentEditUserType = null;
+        document.getElementById('modalTitle').innerText = "➕ 添加新员工";
+        document.getElementById('formUsername').disabled = false;
+        document.getElementById('formUsername').value = '';
+        document.getElementById('pwdRequiredStar').style.display = "inline";
+        document.getElementById('formPassword').required = true;
+        document.getElementById('formPassword').value = '';
+        document.getElementById('formName').value = '';
+        document.getElementById('formGender').value = '保密';
+        document.getElementById('formUserType').value = 'user';
+        document.getElementById('formPosition').value = '';
+        document.getElementById('formEmail').value = '';
+        document.getElementById('formPhone').value = '';
+        
+        renderPermissionCheckboxes('permissionsCheckboxGroup', ['create_project', 'create_task']);
+        
+        document.getElementById('userModal').style.display = 'flex';
+        showDebug('打开添加用户弹窗');
+    }
+
+    function openEditUserModal(user) {
+        showDebug(`打开编辑用户弹窗: ${user.username}`);
+        showDebug(`用户数据: ${JSON.stringify(user)}`);
+        showDebug(`用户权限: ${JSON.stringify(user.permissions || [])}`);
+        
+        currentEditUsername = user.username;
+        currentEditUserType = user.user_type;
+        document.getElementById('modalTitle').innerText = `✏️ 编辑用户: ${user.username}`;
+        document.getElementById('formUsername').value = user.username;
+        document.getElementById('formUsername').disabled = true;
+        document.getElementById('pwdRequiredStar').style.display = "none";
+        document.getElementById('formPassword').required = false;
+        document.getElementById('formPassword').value = "";
+        document.getElementById('formName').value = user.name || "";
+        document.getElementById('formGender').value = user.gender || "保密";
+        document.getElementById('formUserType').value = user.user_type || "user";
+        document.getElementById('formPosition').value = user.position || "";
+        document.getElementById('formEmail').value = user.email || "";
+        document.getElementById('formPhone').value = user.phone || "";
+        
+        let userPerms = user.permissions || [];
+        if (user.user_type === 'admin' && userPerms.length === 0) {
+            userPerms = Object.keys(ALL_PERMISSIONS);
+        }
+        
+        showDebug(`最终加载的权限: ${JSON.stringify(userPerms)}`);
+        renderPermissionCheckboxes('permissionsCheckboxGroup', userPerms);
+        
+        document.getElementById('userModal').style.display = 'flex';
+    }
+
+    function closeUserModal() {
+        document.getElementById('userModal').style.display = 'none';
+        showDebug('关闭弹窗');
+    }
+
+    // 保存用户信息（包括权限）
+    async function submitUserForm(e) {
+        e.preventDefault();
+        
+        const selectedPermissions = getSelectedPermissions('permissionsCheckboxGroup');
+        const userType = document.getElementById('formUserType').value;
+        
+        let finalPermissions = selectedPermissions;
+        if (userType === 'admin') {
+            finalPermissions = Object.keys(ALL_PERMISSIONS);
+        }
+        
+        showDebug(`提交的权限: ${JSON.stringify(finalPermissions)}`);
+        
+        const submitBtn = document.querySelector('#userForm button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = '保存中...';
+        submitBtn.disabled = true;
+
+        try {
+            if (currentEditUsername) {
+                // ========== 编辑现有用户 ==========
+                // 1. 更新用户基本信息（密码可选，其他字段）
+                const userPayload = {
+                    name: document.getElementById('formName').value,
+                    gender: document.getElementById('formGender').value,
+                    position: document.getElementById('formPosition').value,
+                    email: document.getElementById('formEmail').value,
+                    phone: document.getElementById('formPhone').value,
+                    password: document.getElementById('formPassword').value || undefined
+                };
+                
+                showDebug(`编辑用户 - 基本信息: ${JSON.stringify(userPayload)}`);
+                
+                const userResponse = await fetch(`/api/users/update/${currentEditUsername}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userPayload)
+                });
+                const userResult = await userResponse.json();
+                showDebug(`用户信息保存响应: ${JSON.stringify(userResult)}`);
+                
+                if (userResult.code !== "SUCCESS") {
+                    alert("保存用户信息失败: " + (userResult.detail || userResult.message));
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                    return;
+                }
+                
+                // 2. 如果不是管理员账户，单独调用权限更新接口
+                if (currentEditUsername !== 'admin') {
+                    showDebug(`调用权限更新接口，设置权限: ${JSON.stringify(finalPermissions)}`);
+                    const permResponse = await fetch(`/api/users/permissions/${currentEditUsername}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ permissions: finalPermissions })
+                    });
+                    const permResult = await permResponse.json();
+                    showDebug(`权限更新响应: ${JSON.stringify(permResult)}`);
+                    
+                    if (permResult.code !== "SUCCESS") {
+                        alert("保存权限失败: " + (permResult.detail || permResult.message));
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                        return;
+                    }
+                } else {
+                    showDebug(`管理员账户 ${currentEditUsername} 无需单独设置权限`);
+                }
+                
+            } else {
+                // ========== 添加新用户 ==========
+                const username = document.getElementById('formUsername').value.trim();
+                const password = document.getElementById('formPassword').value;
+                
+                if (!username) {
+                    alert('用户名不能为空');
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                    return;
+                }
+                if (!password) {
+                    alert('密码不能为空');
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                    return;
+                }
+                
+                // 1. 创建用户基本信息
+                const userPayload = {
+                    username: username,
+                    password: password,
+                    name: document.getElementById('formName').value,
+                    gender: document.getElementById('formGender').value,
+                    user_type: userType,
+                    position: document.getElementById('formPosition').value,
+                    email: document.getElementById('formEmail').value,
+                    phone: document.getElementById('formPhone').value
+                };
+                
+                showDebug(`添加新用户 - 基本信息: ${JSON.stringify(userPayload)}`);
+                
+                const userResponse = await fetch('/api/users/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userPayload)
+                });
+                const userResult = await userResponse.json();
+                showDebug(`用户创建响应: ${JSON.stringify(userResult)}`);
+                
+                if (userResult.code !== "SUCCESS") {
+                    alert("创建用户失败: " + (userResult.detail || userResult.message));
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                    return;
+                }
+                
+                // 2. 如果不是管理员，设置用户权限
+                if (userType !== 'admin') {
+                    showDebug(`为新用户 ${username} 设置权限: ${JSON.stringify(finalPermissions)}`);
+                    const permResponse = await fetch(`/api/users/permissions/${username}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ permissions: finalPermissions })
+                    });
+                    const permResult = await permResponse.json();
+                    showDebug(`权限设置响应: ${JSON.stringify(permResult)}`);
+                    
+                    if (permResult.code !== "SUCCESS") {
+                        alert("设置权限失败: " + (permResult.detail || permResult.message) + "\n用户已创建，请手动编辑权限");
+                        // 不返回，继续完成流程
+                    }
+                } else {
+                    showDebug(`新用户 ${username} 是管理员，自动拥有所有权限`);
+                }
+            }
+            
+            alert("操作成功！");
+            closeUserModal();
+            fetchUserList();
+            
+        } catch (err) {
+            showDebug(`提交错误: ${err.message}`);
+            alert("提交失败: " + err.message);
+        } finally {
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+    }
+
+    function toggleUserStatus(username) {
+        if (confirm(`确定要切换用户 [${username}] 的状态吗？`)) {
+            fetch(`/api/users/toggle-status/${username}`, { method: 'POST' })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.code === "SUCCESS") {
+                        fetchUserList();
+                    } else {
+                        alert("操作失败: " + res.detail);
+                    }
+                })
+                .catch(err => alert("网络错误"));
+        }
+    }
+
+    showDebug('页面初始化完成，开始加载用户列表...');
+    fetchUserList();
+</script>
+
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    #userTableBody tr:hover {
+        background-color: #f8f9fa;
+    }
+    button {
+        transition: all 0.2s ease;
+    }
+    button:hover {
+        transform: translateY(-1px);
+    }
+    input, select {
+        transition: border-color 0.2s;
+    }
+    input:focus, select:focus {
+        outline: none;
+        border-color: #007bff;
+    }
+</style>

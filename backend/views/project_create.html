@@ -1,0 +1,250 @@
+<div style="background-color: white; border-radius: 12px; width: 680px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); border-top: 5px solid #2563eb; animation: modalSlideUp 0.2s ease; color: #1e293b; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+    
+    <div style="padding: 20px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background-color: #f8fafc;">
+        <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: #0f172a;">➕ 建立新项目全要素</h3>
+        <span onclick="if(window.parent && window.parent.closeGlobalModal) window.parent.closeGlobalModal(); else if(window.closeGlobalModal) closeGlobalModal()" style="cursor: pointer; font-size: 24px; color: #94a3b8; font-weight: bold; line-height: 1;">&times;</span>
+    </div>
+    
+    <div style="padding: 24px;">
+        <form id="realCreateProjectForm" onsubmit="submitProjectFormEvent(event)" style="display: flex; flex-direction: column; gap: 18px;">
+            
+            <div>
+                <label style="display: block; font-size: 14px; font-weight: 600; color: #344155; margin-bottom: 6px;">1. 项目名称 *</label>
+                <input type="text" id="proj_name" required style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;" placeholder="示例：2026年全自动化气动机械臂产线升级">
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 14px; font-weight: 600; color: #344155; margin-bottom: 6px;">2. 产品灵感故事 (给产品一个灵魂) *</label>
+                <textarea id="proj_story" required style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; height: 80px; resize: vertical;" placeholder="叙述产品的诞生灵感或其解决的核心痛点，为冰冷的技术模型注入故事灵魂..."></textarea>
+            </div>
+
+            <div style="background-color: #f8fafc; padding: 16px; border-radius: 8px; border: 1px dashed #cbd5e1;">
+                <label style="display: block; font-size: 14px; font-weight: 600; color: #0f172a; margin-bottom: 4px;">3. 核心功能需求清单配置</label>
+                <p style="margin: 0 0 10px 0; font-size: 12px; color: #64748b;">新建阶段可简要列举，后续在项目看板中支持随时添加或移除说明模块。</p>
+                
+                <div id="dynamicRequirementsContainer" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                    <div class="req-item-row" style="display: flex; gap: 8px; align-items: center;">
+                        <span style="color: #94a3b8; font-size: 14px; min-width: 20px;">1.</span>
+                        <input type="text" class="proj_req_input" style="flex: 1; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px;" placeholder="基础功能模块描述（如：高精度丝杠行程调节、耐压高弹气缸绑定）">
+                        <button type="button" onclick="removeRequirementRow(this)" style="background: none; border: 1px solid #ef4444; color: #ef4444; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">删除</button>
+                    </div>
+                </div>
+                
+                <button type="button" onclick="addNewRequirementRow()" style="background-color: #ffffff; border: 1px solid #2563eb; color: #2563eb; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500;">➕ 追加新功能模块说明</button>
+            </div>
+
+            <div style="display: flex; gap: 16px;">
+                <div style="flex: 1;">
+                    <label style="display: block; font-size: 14px; font-weight: 600; color: #344155; margin-bottom: 6px;">4. 标签 (关键字，英文逗号隔开) *</label>
+                    <input type="text" id="proj_tags" required style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;" placeholder="如: 气动原型, 螺纹规, SolidWorks">
+                </div>
+                <div style="flex: 1;">
+                    <label style="display: block; font-size: 14px; font-weight: 600; color: #344155; margin-bottom: 6px;">5. 产品所属类别 (可选择或直接手写打字输入) *</label>
+                    <div style="position: relative; display: flex; flex-direction: column;">
+                        <input type="text" id="proj_category" required style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; z-index: 2; background: transparent;" placeholder="请选择或直接输入新类别名称...">
+                        <select id="proj_category_select" onchange="document.getElementById('proj_category').value=this.value" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; position: absolute; left: 0; top: 0; z-index: 1; color: #94a3b8; background-color: white;">
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 16px;">
+                <div style="flex: 1;">
+                    <label style="display: block; font-size: 14px; font-weight: 600; color: #344155; margin-bottom: 6px;">6. 看板管理优先级 *</label>
+                    <select id="proj_priority" required style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background-color: white;">
+                        <option value="低">🟢 普通 / 常规排产(低)</option>
+                        <option value="中" selected>🟡 重要 / 需密切追踪(中)</option>
+                        <option value="高">🔴 紧急 / 临近交付限期(高)</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label style="display: block; font-size: 14px; font-weight: 600; color: #344155; margin-bottom: 6px;">7. 拟定承运/出运日期 *</label>
+                    <input type="date" id="proj_shipping_date" required style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+                </div>
+            </div>
+
+            <div style="background-color: #eff6ff; padding: 14px 18px; border-radius: 8px; border: 1px solid #bfdbfe; display: flex; align-items: center; justify-content: space-between;">
+                <div style="text-align: left;">
+                    <label style="display: block; font-size: 14px; font-weight: 700; color: #1e3a8a; margin-bottom: 2px;">⚡ 是否立刻启动该项目？</label>
+                    <span style="font-size: 12px; color: #60a5fa;">开启后项目直接进入【进行中】看板状态；关闭则留在【未启动】蓄水池。</span>
+                </div>
+                <div>
+                    <input type="checkbox" id="proj_auto_start" checked style="width: 22px; height: 22px; cursor: pointer; accent-color: #2563eb;">
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 5px; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+                <button type="button" onclick="if(window.parent && window.parent.closeGlobalModal) window.parent.closeGlobalModal(); else if(window.closeGlobalModal) closeGlobalModal()" style="background-color: #cbd5e1; color: #475569; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">取消</button>
+                <button type="submit" style="background-color: #2563eb; color: white; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; box-shadow: 0 4px 6px -1px rgba(37,99,235,0.2);">生成并发布项目</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // 获取当前登录用户信息 - 优先从 localStorage 获取
+    function getCurrentUsername() {
+        // 方法1: 从 localStorage 获取（最可靠）
+        var session = localStorage.getItem('pm_user_session');
+        if (session) {
+            try {
+                var user = JSON.parse(session);
+                console.log('[project_create] 从 localStorage 获取用户:', user.username);
+                return user.username;
+            } catch(e) {
+                console.error('[project_create] 解析 session 失败:', e);
+            }
+        }
+        
+        // 方法2: 从 sessionStorage 获取
+        var altSession = sessionStorage.getItem('pm_user_session');
+        if (altSession) {
+            try {
+                var altUser = JSON.parse(altSession);
+                console.log('[project_create] 从 sessionStorage 获取用户:', altUser.username);
+                return altUser.username;
+            } catch(e) {}
+        }
+        
+        // 方法3: 从父窗口的全局变量获取
+        if (window.parent && window.parent.__currentUser) {
+            console.log('[project_create] 从父窗口获取用户:', window.parent.__currentUser.username);
+            return window.parent.__currentUser.username;
+        }
+        
+        console.warn('[project_create] 无法获取当前用户，将使用 null');
+        return null;
+    }
+
+    // 初始化：加载类别下拉框、设置默认日期
+    (function initCategoryAndDate() {
+        var dateInput = document.getElementById('proj_shipping_date');
+        if (dateInput && !dateInput.value) {
+            var futureDate = new Date();
+            futureDate.setDate(futureDate.getDate() + 30);
+            dateInput.value = futureDate.toISOString().split('T')[0];
+        }
+
+        fetch('/api/projects/categories')
+            .then(res => res.json())
+            .then(res => {
+                if(res.code === "SUCCESS" && res.data) {
+                    var selectCtrl = document.getElementById('proj_category_select');
+                    selectCtrl.innerHTML = '<option value="" disabled selected style="display:none;"></option>';
+                    res.data.forEach(function(cat) {
+                        var opt = document.createElement('option');
+                        opt.value = cat;
+                        opt.innerText = cat;
+                        selectCtrl.appendChild(opt);
+                    });
+                }
+            })
+            .catch(err => console.error("加载类别失败: ", err));
+    })();
+
+    function addNewRequirementRow() {
+        var container = document.getElementById('dynamicRequirementsContainer');
+        var rowCount = container.children.length + 1;
+        var div = document.createElement('div');
+        div.className = 'req-item-row';
+        div.style.display = 'flex';
+        div.style.gap = '8px';
+        div.style.alignItems = 'center';
+        div.innerHTML = `
+            <span style="color: #94a3b8; font-size: 14px; min-width: 20px;">${rowCount}.</span>
+            <input type="text" class="proj_req_input" style="flex: 1; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px;" placeholder="追加功能要求说明...">
+            <button type="button" onclick="removeRequirementRow(this)" style="background: none; border: 1px solid #ef4444; color: #ef4444; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">删除</button>
+        `;
+        container.appendChild(div);
+    }
+
+    function removeRequirementRow(button) {
+        var container = document.getElementById('dynamicRequirementsContainer');
+        if (container.children.length <= 1) {
+            alert('项目必须保留至少一项基础功能需求说明。');
+            return;
+        }
+        var row = button.parentNode;
+        row.parentNode.removeChild(row);
+        var rows = container.getElementsByClassName('req-item-row');
+        for (var i = 0; i < rows.length; i++) {
+            rows[i].getElementsByTagName('span')[0].innerText = (i + 1) + '.';
+        }
+    }
+
+    function submitProjectFormEvent(e) {
+        e.preventDefault();
+        
+        var reqInputs = document.getElementsByClassName('proj_req_input');
+        var requirementsList = [];
+        for (var i = 0; i < reqInputs.length; i++) {
+            var val = reqInputs[i].value.trim();
+            if (val) requirementsList.push(val);
+        }
+
+        var payload = {
+            name: document.getElementById('proj_name').value.trim(),
+            story: document.getElementById('proj_story').value.trim(),
+            requirements: requirementsList,
+            tags: document.getElementById('proj_tags').value.trim(),
+            category: document.getElementById('proj_category').value.trim(),
+            priority: document.getElementById('proj_priority').value,
+            shipping_date: document.getElementById('proj_shipping_date').value,
+            auto_start: document.getElementById('proj_auto_start').checked
+        };
+
+        if(!payload.category) {
+            alert("请输入或选择产品所属类别。");
+            return;
+        }
+
+        // 获取当前用户名
+        var currentUsername = getCurrentUsername();
+        console.log('[project_create] 当前操作用户:', currentUsername);
+        
+        // 构建请求头
+        var headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (currentUsername) {
+            headers['X-Username'] = currentUsername;
+        }
+        
+        console.log('[project_create] 发送请求头:', headers);
+
+        fetch('/api/projects/add', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(payload)
+        })
+        .then(function(res) {
+            return res.json().then(function(resData) {
+                if (res.ok && resData.code === "SUCCESS") {
+                    alert('🎉 新项目【' + payload.name + '】已成功创建！');
+                    if (window.parent && window.parent.refreshProjectList) {
+                        window.parent.refreshProjectList();
+                    }
+                    if (window.parent && window.parent.closeGlobalModal) {
+                        window.parent.closeGlobalModal();
+                    } else if (typeof window.closeGlobalModal === 'function') {
+                        window.closeGlobalModal();
+                    }
+                } else {
+                    alert('操作失败: ' + (resData.detail || '接口返回错误'));
+                }
+            });
+        })
+        .catch(function(err) {
+            console.error('[project_create] 创建项目错误:', err);
+            alert('网络通讯故障，请检查后端运行状态。\n' + err.message);
+        });
+    }
+</script>
+
+<style>
+    @keyframes modalSlideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>

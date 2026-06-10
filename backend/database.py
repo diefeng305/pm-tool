@@ -1,0 +1,50 @@
+# database.py
+import os
+import time
+import hashlib
+import hmac
+import pymysql
+
+def get_db_connection():
+    """纯粹的底层数据库物理连接，不依赖 main，不依赖 auth"""
+    host = os.getenv("DB_HOST", "pm-db")
+    port = int(os.getenv("DB_PORT", 3306))
+    user = os.getenv("DB_USER", "pm_worker")
+    password = os.getenv("DB_PASSWORD", "pm_worker_password_998")
+    database = os.getenv("DB_NAME", "pm_database")
+    
+    retry_count = 10
+    retry_delay = 3
+    
+    print(f"🔌 尝试连接数据库: host={host}, port={port}, database={database}, user={user}")
+    
+    while retry_count > 0:
+        try:
+            conn = pymysql.connect(
+                host=host,
+                port=port,
+                user=user,
+                password=password,
+                database=database,
+                charset='utf8mb4',
+                cursorclass=pymysql.cursors.DictCursor,
+                connect_timeout=10
+            )
+            print(f"✅ 数据库连接成功: {host}:{port}/{database}")
+            return conn
+        except Exception as e:
+            print(f"数据库连接失败，剩余重试次数: {retry_count-1}，错误: {str(e)}")
+            time.sleep(retry_delay)
+            retry_count -= 1
+    
+    raise Exception(f"无法连接到 MySQL 数据库 {host}:{port}，请检查网络和服务状态")
+
+def hash_password(password: str) -> str:
+    """全局唯一的密码哈希"""
+    salt = b"pm_secure_salt_2026"
+    pwd_hash = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
+    return pwd_hash.hex()
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """密码强校验"""
+    return hmac.compare_digest(hash_password(plain_password), hashed_password)

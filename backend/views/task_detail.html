@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>任务详情</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 30px;
+            color: #1e293b;
+        }
+        .task-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+        .task-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .task-header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .header-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            border: none;
+        }
+        .btn-start { background: #3b82f6; color: white; }
+        .btn-start:hover { background: #2563eb; }
+        .btn-complete { background: #10b981; color: white; }
+        .btn-complete:hover { background: #059669; }
+        .btn-review { background: #f59e0b; color: white; }
+        .btn-review:hover { background: #d97706; }
+        .btn-delete { background: #dc2626; color: white; }
+        .btn-delete:hover { background: #b91c1c; }
+        .btn-secondary { background: #64748b; color: white; }
+        .btn-secondary:hover { background: #475569; }
+        .btn-close { background: #e2e8f0; color: #475569; }
+        .btn-close:hover { background: #cbd5e1; }
+        .task-body {
+            padding: 24px;
+        }
+        .info-row-equal {
+            display: flex;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 12px;
+        }
+        .info-row-equal .info-item {
+            flex: 1;
+            min-width: 150px;
+        }
+        .info-row-first {
+            display: flex;
+            margin-bottom: 16px;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 12px;
+        }
+        .priority-item {
+            flex-shrink: 0;
+        }
+        .project-center {
+            flex: 1;
+            text-align: center;
+        }
+        .info-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+        .info-value {
+            font-size: 14px;
+            color: #1e293b;
+        }
+        .priority-badge {
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+        }
+        .priority-high { background: #fee2e2; color: #dc2626; }
+        .priority-medium { background: #fef3c7; color: #d97706; }
+        .priority-low { background: #e0f2fe; color: #0284c7; }
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+        }
+        .status-pending { background: #e2e8f0; color: #64748b; }
+        .status-in_progress { background: #dbeafe; color: #2563eb; }
+        .status-completed { background: #d1fae5; color: #10b981; }
+        .status-delayed { background: #fee2e2; color: #dc2626; }
+        .file-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .file-tag {
+            background: #e2e8f0;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .file-tag a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+        .history-timeline {
+            margin-top: 16px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 16px;
+        }
+        .history-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 12px;
+        }
+        .history-item {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            border-left: 3px solid;
+        }
+        .history-item.completion { border-left-color: #3b82f6; background: #eff6ff; }
+        .history-item.approve { border-left-color: #10b981; background: #ecfdf5; }
+        .history-item.reject { border-left-color: #dc2626; background: #fef2f2; }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .history-type {
+            font-weight: 600;
+        }
+        .history-type.completion { color: #2563eb; }
+        .history-type.approve { color: #10b981; }
+        .history-type.reject { color: #dc2626; }
+        .history-time {
+            color: #64748b;
+            font-size: 12px;
+        }
+        .history-feedback {
+            font-size: 13px;
+            margin: 8px 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .history-files {
+            margin-top: 6px;
+            font-size: 12px;
+        }
+        .loading { text-align: center; padding: 60px; color: #94a3b8; }
+        .error { text-align: center; padding: 60px; color: #dc2626; }
+        .modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        .modal-container {
+            background: white;
+            border-radius: 16px;
+            width: 500px;
+            max-width: 90%;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+        }
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        .feedback-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            resize: vertical;
+            font-family: inherit;
+            margin-bottom: 16px;
+        }
+        .file-upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+        .file-upload-area:hover {
+            background: #f8fafc;
+        }
+        .selected-files {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="task-container">
+        <div class="task-header">
+            <h1 id="taskTitle">任务详情</h1>
+            <div class="header-buttons" id="actionButtons">
+                <!-- 动态按钮 -->
+            </div>
+        </div>
+        <div id="taskBody" class="task-body">
+            <div class="loading">加载任务信息中...</div>
+        </div>
+    </div>
+
+    <script>
+        var currentTask = null;
+        var currentUsername = null;
+        
+        // ========== 权限控制 ==========
+        function getUserPermissions() {
+            var session = localStorage.getItem('pm_user_session');
+            if (session) {
+                try {
+                    var user = JSON.parse(session);
+                    return user.permissions || [];
+                } catch(e) { return []; }
+            }
+            return [];
+        }
+
+        function hasPermission(permission) {
+            var permissions = getUserPermissions();
+            return permissions.indexOf(permission) !== -1;
+        }
+        
+        function getQueryParam(name) {
+            var urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        function getCurrentUser() {
+            var session = localStorage.getItem('pm_user_session');
+            if (session) {
+                try {
+                    var user = JSON.parse(session);
+                    currentUsername = user.username;
+                    return user.username;
+                } catch(e) { return null; }
+            }
+            return null;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        function startTask() {
+            if (!currentTask) return;
+            var username = getCurrentUser() || 'admin';
+            fetch('/api/projects/tasks/' + currentTask.id + '/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Username': username }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(res) {
+                if (res.code === 'SUCCESS') {
+                    alert('任务已开始');
+                    fetchTaskData();
+                    if (window.opener && window.opener.refreshProjectMilestones) {
+                        window.opener.refreshProjectMilestones(currentTask.project_code);
+                    }
+                    localStorage.setItem('task_updated_' + currentTask.project_code, 'true');
+                } else {
+                    alert('操作失败: ' + (res.detail || '未知错误'));
+                }
+            })
+            .catch(function(err) { alert('网络错误: ' + err.message); });
+        }
+
+        function showCompleteForm() {
+            var modalHtml = '<div id="completeModal" class="modal-mask" onclick="if(event.target===this) closeModal()">' +
+                '<div class="modal-container">' +
+                '<div class="modal-header"><h3>✅ 完成任务</h3><button onclick="closeModal()" style="background:none; border:none; font-size:24px; cursor:pointer;">&times;</button></div>' +
+                '<div class="modal-body">' +
+                '<div class="detail-row"><label class="detail-label">完成反馈 *</label><textarea id="feedbackText" class="feedback-textarea" rows="4" placeholder="请填写任务完成情况、遇到的问题等..."></textarea></div>' +
+                '<div class="detail-row"><label class="detail-label">上传附件（可选，支持多文件）</label>' +
+                '<div class="file-upload-area" onclick="document.getElementById(\'completeFileInput\').click()">📎 点击选择文件</div>' +
+                '<input type="file" id="completeFileInput" multiple style="display:none" onchange="updateFileList(\'complete\')">' +
+                '<div id="completeFileList" class="selected-files"></div></div></div>' +
+                '<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-complete" onclick="submitComplete()">提交完成</button></div></div></div>';
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            window.completeSelectedFiles = [];
+        }
+
+        function submitComplete() {
+            var feedback = document.getElementById('feedbackText') ? document.getElementById('feedbackText').value : '';
+            if (!feedback) {
+                alert('请填写完成反馈');
+                return;
+            }
+            var files = window.completeSelectedFiles || [];
+            var formData = new FormData();
+            formData.append('feedback', feedback);
+            for (var i = 0; i < files.length; i++) {
+                formData.append('files', files[i]);
+            }
+            var username = getCurrentUser() || 'admin';
+            fetch('/api/projects/tasks/' + currentTask.id + '/complete', {
+                method: 'POST',
+                headers: { 'X-Username': username },
+                body: formData
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(res) {
+                if (res.code === 'SUCCESS') {
+                    alert('任务已完成，等待审核');
+                    closeModal();
+                    fetchTaskData();
+                    if (window.opener && window.opener.refreshProjectMilestones) {
+                        window.opener.refreshProjectMilestones(currentTask.project_code);
+                    }
+                    localStorage.setItem('task_updated_' + currentTask.project_code, 'true');
+                } else {
+                    alert('操作失败: ' + (res.detail || '未知错误'));
+                }
+            })
+            .catch(function(err) { alert('网络错误: ' + err.message); });
+        }
+
+        function showReviewForm(action) {
+            var actionText = action === 'approve' ? '审核通过' : '退回重做';
+            var btnClass = action === 'approve' ? 'btn-complete' : 'btn-delete';
+            var modalHtml = '<div id="reviewModal" class="modal-mask" onclick="if(event.target===this) closeModal()">' +
+                '<div class="modal-container">' +
+                '<div class="modal-header"><h3>' + (action === 'approve' ? '✓ 审核通过' : '🔄 退回重做') + '</h3><button onclick="closeModal()" style="background:none; border:none; font-size:24px; cursor:pointer;">&times;</button></div>' +
+                '<div class="modal-body">' +
+                '<div class="detail-row"><label class="detail-label">审校反馈</label><textarea id="reviewFeedbackText" class="feedback-textarea" rows="4" placeholder="请填写审校意见..."></textarea></div>' +
+                '<div class="detail-row"><label class="detail-label">上传附件（可选）</label>' +
+                '<div class="file-upload-area" onclick="document.getElementById(\'reviewFileInput\').click()">📎 点击选择文件</div>' +
+                '<input type="file" id="reviewFileInput" multiple style="display:none" onchange="updateFileList(\'review\')">' +
+                '<div id="reviewFileList" class="selected-files"></div></div></div>' +
+                '<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn ' + btnClass + '" onclick="submitReview(\'' + action + '\')">确认' + actionText + '</button></div></div></div>';
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            window.reviewSelectedFiles = [];
+        }
+
+        function submitReview(action) {
+            var feedback = document.getElementById('reviewFeedbackText') ? document.getElementById('reviewFeedbackText').value : '';
+            var files = window.reviewSelectedFiles || [];
+            var formData = new FormData();
+            formData.append('action', action);
+            formData.append('feedback', feedback);
+            for (var i = 0; i < files.length; i++) {
+                formData.append('files', files[i]);
+            }
+            var username = getCurrentUser() || 'admin';
+            fetch('/api/projects/tasks/' + currentTask.id + '/submit-review', {
+                method: 'POST',
+                headers: { 'X-Username': username },
+                body: formData
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(res) {
+                if (res.code === 'SUCCESS') {
+                    alert(res.message);
+                    closeModal();
+                    fetchTaskData();
+                    if (window.opener && window.opener.refreshProjectMilestones) {
+                        window.opener.refreshProjectMilestones(currentTask.project_code);
+                    }
+                    localStorage.setItem('task_updated_' + currentTask.project_code, 'true');
+                } else {
+                    alert('操作失败: ' + (res.detail || '未知错误'));
+                }
+            })
+            .catch(function(err) { alert('网络错误: ' + err.message); });
+        }
+
+        function deleteTask() {
+            if (!currentTask) return;
+            if (!confirm('确定要删除任务 "' + currentTask.title + '" 吗？此操作不可撤销。')) return;
+            var username = getCurrentUser() || 'admin';
+            fetch('/api/projects/tasks/' + currentTask.id, {
+                method: 'DELETE',
+                headers: { 'X-Username': username }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(res) {
+                if (res.code === 'SUCCESS') {
+                    alert('任务已删除');
+                    if (window.opener && window.opener.refreshProjectMilestones) {
+                        window.opener.refreshProjectMilestones(currentTask.project_code);
+                    }
+                    localStorage.setItem('task_updated_' + currentTask.project_code, 'true');
+                    localStorage.setItem('need_refresh_task_center', 'true');
+                    window.close();
+                } else {
+                    alert('删除失败: ' + (res.detail || '未知错误'));
+                }
+            })
+            .catch(function(err) { alert('网络错误: ' + err.message); });
+        }
+
+        function updateFileList(type) {
+            if (type === 'complete') {
+                var input = document.getElementById('completeFileInput');
+                var container = document.getElementById('completeFileList');
+                window.completeSelectedFiles = Array.from(input.files);
+                if (window.completeSelectedFiles.length === 0) {
+                    container.innerHTML = '';
+                } else {
+                    var html = '';
+                    for (var i = 0; i < window.completeSelectedFiles.length; i++) {
+                        html += '<div class="file-tag">📄 ' + escapeHtml(window.completeSelectedFiles[i].name) + '</div>';
+                    }
+                    container.innerHTML = html;
+                }
+            } else if (type === 'review') {
+                var inputReview = document.getElementById('reviewFileInput');
+                var containerReview = document.getElementById('reviewFileList');
+                window.reviewSelectedFiles = Array.from(inputReview.files);
+                if (window.reviewSelectedFiles.length === 0) {
+                    containerReview.innerHTML = '';
+                } else {
+                    var htmlReview = '';
+                    for (var j = 0; j < window.reviewSelectedFiles.length; j++) {
+                        htmlReview += '<div class="file-tag">📄 ' + escapeHtml(window.reviewSelectedFiles[j].name) + '</div>';
+                    }
+                    containerReview.innerHTML = htmlReview;
+                }
+            }
+        }
+
+        function closeModal() {
+            var modal = document.getElementById('completeModal');
+            if (modal) modal.remove();
+            var reviewModal = document.getElementById('reviewModal');
+            if (reviewModal) reviewModal.remove();
+        }
+
+        function renderHistory(records) {
+            if (!records || records.length === 0) { return ''; }
+            var sortedRecords = records.slice().sort(function(a, b) { return a.id - b.id; });
+            var html = '<div class="history-timeline"><div class="history-title">📋 任务历史记录</div>';
+            for (var i = 0; i < sortedRecords.length; i++) {
+                var record = sortedRecords[i];
+                var itemClass = '', typeClass = '', typeText = '', operator = '', feedback = '', files = [];
+                if (record.type === 'completion') {
+                    itemClass = 'completion'; typeClass = 'completion'; typeText = '📝 完成任务'; operator = record.operator; feedback = record.feedback; files = record.files || [];
+                } else if (record.action === 'approve') {
+                    itemClass = 'approve'; typeClass = 'approve'; typeText = '✓ 审核通过'; operator = record.reviewer; feedback = record.feedback; files = record.files || [];
+                } else if (record.action === 'reject') {
+                    itemClass = 'reject'; typeClass = 'reject'; typeText = '🔄 退回重做'; operator = record.reviewer; feedback = record.feedback; files = record.files || [];
+                } else { continue; }
+                html += '<div class="history-item ' + itemClass + '">' +
+                    '<div class="history-header"><span class="history-type ' + typeClass + '">' + typeText + '</span><span class="history-time">👤 ' + escapeHtml(operator) + ' | 🕐 ' + escapeHtml(record.created_at) + '</span></div>';
+                if (feedback) { html += '<div class="history-feedback">📝 ' + escapeHtml(feedback) + '</div>'; }
+                if (files && files.length > 0) {
+                    html += '<div class="history-files">📎 附件: ';
+                    for (var f = 0; f < files.length; f++) {
+                        html += '<a href="' + files[f] + '" target="_blank">' + files[f].split('/').pop() + '</a>';
+                        if (f < files.length - 1) html += ', ';
+                    }
+                    html += '</div>';
+                }
+                html += '</div>';
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function renderTaskContent() {
+            if (!currentTask) return;
+            var t = currentTask;
+            document.title = t.title + ' - 任务详情';
+            document.getElementById('taskTitle').innerText = t.title;
+            var priorityClass = '', priorityText = '';
+            switch (t.priority) {
+                case 'high': priorityClass = 'priority-high'; priorityText = '高'; break;
+                case 'medium': priorityClass = 'priority-medium'; priorityText = '中'; break;
+                default: priorityClass = 'priority-low'; priorityText = '低';
+            }
+            var statusClass = '', statusText = '';
+            switch (t.status) {
+                case 'pending': statusClass = 'status-pending'; statusText = '待处理'; break;
+                case 'in_progress': statusClass = 'status-in_progress'; statusText = '进行中'; break;
+                case 'completed': statusClass = 'status-completed'; statusText = '已完成'; break;
+                case 'delayed': statusClass = 'status-delayed'; statusText = '已延误'; break;
+            }
+            var creator = '未知';
+            if (t.review_records && t.review_records.length > 0) {
+                var firstCompletion = t.review_records.find(function(r) { return r.type === 'completion'; });
+                if (firstCompletion) { creator = firstCompletion.operator; }
+            }
+            var reviewersText = '无';
+            if (t.reviewers && t.reviewers.length > 0) { reviewersText = t.reviewers.join(', '); }
+            var filesHtml = '';
+            if (t.feedback_files && t.feedback_files.length) {
+                filesHtml = '<div class="detail-row"><div class="detail-label">📎 最新附件</div><div class="file-list">';
+                for (var i = 0; i < t.feedback_files.length; i++) {
+                    filesHtml += '<div class="file-tag"><a href="' + t.feedback_files[i] + '" target="_blank">📄 ' + t.feedback_files[i].split('/').pop() + '</a></div>';
+                }
+                filesHtml += '</div></div>';
+            }
+            var historyHtml = renderHistory(t.review_records);
+            var html = '<div class="info-row-first">' +
+                '<div class="priority-item"><div class="info-label">优先级</div><div class="info-value"><span class="priority-badge ' + priorityClass + '">' + priorityText + '</span></div></div>' +
+                '<div class="project-center"><div class="info-label">所属项目</div><div class="info-value">' + escapeHtml(t.project_name) + ' (' + escapeHtml(t.project_code) + ')</div></div></div>' +
+                '<div class="info-row-equal"><div class="info-item"><div class="info-label">📌 任务发布人</div><div class="info-value">' + escapeHtml(creator) + '</div></div>' +
+                '<div class="info-item"><div class="info-label">👤 任务接收人</div><div class="info-value">' + escapeHtml(t.assignee || '未指派') + '</div></div>' +
+                '<div class="info-item"><div class="info-label">🔍 任务审校人</div><div class="info-value">' + escapeHtml(reviewersText) + '</div></div></div>' +
+                '<div class="info-row-equal"><div class="info-item"><div class="info-label">创建时间</div><div class="info-value">' + (t.created_at_str || '-') + '</div></div>' +
+                '<div class="info-item"><div class="info-label">截止时间</div><div class="info-value">' + (t.due_date_str || '未设置') + '</div></div></div>' +
+                '<div class="info-row-equal"><div class="info-item"><div class="info-label">状态</div><div class="info-value"><span class="status-badge ' + statusClass + '">' + statusText + '</span></div></div>' +
+                '<div class="info-item"><div class="info-label">完成时间</div><div class="info-value">' + (t.completed_at_str || '-') + '</div></div></div>' +
+                filesHtml + historyHtml;
+            document.getElementById('taskBody').innerHTML = html;
+            renderActionButtons();
+        }
+
+        function renderActionButtons() {
+            var container = document.getElementById('actionButtons');
+            if (!container) return;
+            var buttonsHtml = '';
+            if (currentTask.assignee === currentUsername) {
+                if (currentTask.status === 'pending') {
+                    buttonsHtml += '<button class="btn btn-start" onclick="startTask()">▶ 开始执行</button>';
+                } else if (currentTask.status === 'in_progress') {
+                    buttonsHtml += '<button class="btn btn-complete" onclick="showCompleteForm()">✅ 完成任务</button>';
+                }
+            }
+            if (currentTask.status === 'completed') {
+                var isAdmin = currentUsername === 'admin';
+                var isReviewer = currentTask.reviewers && currentTask.reviewers.indexOf(currentUsername) !== -1;
+                if (hasPermission('audit_flow') && (isAdmin || isReviewer)) {
+                    buttonsHtml += '<button class="btn btn-review" onclick="showReviewForm(\'reject\')">🔄 退回重做</button>';
+                    buttonsHtml += '<button class="btn btn-complete" onclick="showReviewForm(\'approve\')">✓ 审核通过</button>';
+                }
+            }
+            if (hasPermission('delete_task')) {
+                buttonsHtml += '<button class="btn btn-delete" onclick="deleteTask()">🗑️ 删除任务</button>';
+            }
+            buttonsHtml += '<button class="btn btn-close" onclick="window.close()">← 关闭</button>';
+            container.innerHTML = buttonsHtml;
+        }
+
+        function fetchTaskData() {
+            var taskId = getQueryParam('task_id');
+            if (!taskId) {
+                document.getElementById('taskBody').innerHTML = '<div class="error">❌ 未指定任务ID</div>';
+                return;
+            }
+            fetch('/api/projects/tasks/' + taskId)
+                .then(function(res) { return res.json(); })
+                .then(function(res) {
+                    if (res.code === 'SUCCESS' && res.data) {
+                        currentTask = res.data;
+                        renderTaskContent();
+                    } else {
+                        document.getElementById('taskBody').innerHTML = '<div class="error">❌ 加载失败: ' + escapeHtml(res.detail || '任务不存在') + '</div>';
+                    }
+                })
+                .catch(function(err) {
+                    document.getElementById('taskBody').innerHTML = '<div class="error">❌ 网络错误: ' + escapeHtml(err.message) + '</div>';
+                });
+        }
+
+        getCurrentUser();
+        fetchTaskData();
+    </script>
+</body>
+</html>

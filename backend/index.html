@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>项目管理系统 V2.7</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #0f172a; color: #1e293b; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .hidden { display: none !important; }
+        
+        body[data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+        }
+        body[data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+        }
+        @media (prefers-color-scheme: dark) {
+            body[data-theme="auto"] {
+                --bg-primary: #0f172a;
+                --bg-secondary: #1e293b;
+                --text-primary: #f1f5f9;
+                --text-secondary: #94a3b8;
+                --border-color: #334155;
+            }
+        }
+        @media (prefers-color-scheme: light) {
+            body[data-theme="auto"] {
+                --bg-primary: #f8fafc;
+                --bg-secondary: #ffffff;
+                --text-primary: #1e293b;
+                --text-secondary: #64748b;
+                --border-color: #e2e8f0;
+            }
+        }
+        
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .login-box h2 { font-size: 28px; margin-bottom: 10px; }
+        .login-box p { color: #64748b; margin-bottom: 30px; }
+        .form-group { text-align: left; margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn:hover { background: #1d4ed8; }
+        
+        header {
+            height: 70px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+        .logo img { height: 50px; width: auto; max-width: 240px; object-fit: contain; }
+        .logo-text { font-size: 20px; font-weight: 800; color: #38bdf8; }
+        .nav-wrapper { margin-left: 80px; }
+        nav { display: flex; gap: 8px; }
+        .nav-btn {
+            padding: 8px 16px;
+            background: transparent;
+            color: var(--text-secondary);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .nav-btn.active { background: #2563eb; color: white; }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .badge {
+            background: var(--bg-primary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .admin-menu {
+            position: relative;
+        }
+        .admin-menu-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+        .admin-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            min-width: 220px;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .admin-dropdown.show { display: block; }
+        .admin-dropdown a {
+            display: block;
+            padding: 10px 16px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .admin-dropdown a:hover { background: var(--bg-primary); }
+        .dropdown-divider {
+            border-top: 1px solid var(--border-color);
+            margin: 4px 0;
+        }
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            background-color: var(--bg-primary);
+        }
+        aside {
+            width: 260px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+        }
+        .aside-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            padding-left: 10px;
+        }
+        .sub-btn {
+            width: 100%;
+            text-align: left;
+            padding: 10px 14px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+        .sub-btn.active {
+            background: var(--bg-primary);
+            color: #2563eb;
+        }
+        main {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            background-color: var(--bg-primary);
+        }
+        .hide-sidebar aside { display: none; }
+        .hide-sidebar main { width: 100%; padding: 0; }
+        
+        /* 全局弹窗遮罩 */
+        .global-modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+    </style>
+</head>
+<body data-theme="light">
+
+<div id="login-page" class="login-container">
+    <div class="login-box">
+        <h2>系统登录</h2>
+        <p>模块化项目管理平台 V2.7</p>
+        <div class="form-group"><label>账号</label><input type="text" id="login-username" placeholder="请输入账号"></div>
+        <div class="form-group"><label>密码</label><input type="password" id="login-password" placeholder="请输入密码"></div>
+        <button id="login-submit-btn" class="btn">安全登录</button>
+    </div>
+</div>
+
+<div id="main-dashboard" class="hidden" style="display:flex; flex-direction:column; flex:1; height:100%;">
+    <header>
+        <div style="display:flex; align-items:center;">
+            <div id="logoContainer" class="logo">
+                <img id="logoImage" src="" alt="Logo" style="display: none;">
+                <span id="logoText" class="logo-text">📦 PM_SYSTEM</span>
+            </div>
+            <div class="nav-wrapper">
+                <nav>
+                    <button id="nav-dashboard" class="nav-btn">📊 仪表盘</button>
+                    <button id="nav-project" class="nav-btn">项目中心</button>
+                    <button id="nav-task" class="nav-btn">任务中心</button>
+                    <button id="nav-setting" class="nav-btn">系统设置</button>
+                </nav>
+            </div>
+        </div>
+        <div class="user-info">
+            <span id="user-badge" class="badge">加载中...</span>
+            <div id="adminMenuContainer" class="admin-menu" style="display: none;">
+                <button id="adminMenuBtn" class="admin-menu-btn">🔧 系统维护</button>
+                <div id="adminDropdown" class="admin-dropdown">
+                    <a id="repairDbBtn">🔧 修复数据库结构（不删数据）</a>
+                    <div class="dropdown-divider"></div>
+                    <a id="fullResetBtn" style="color:#dc2626;">⚠️ 完全重置系统（清空所有数据）</a>
+                </div>
+            </div>
+            <button id="logout-trigger-btn" class="logout-btn" style="background:none; border:1px solid var(--border-color); border-radius:6px; padding:6px 12px;">退出</button>
+        </div>
+    </header>
+    <div class="main-container">
+        <aside><div class="aside-title">功能导航</div><div id="sub-menu-container"></div></aside>
+        <main id="main-content-view"></main>
+    </div>
+</div>
+
+<script>
+    var API_BASE = window.location.origin;
+    var currentUserId = null;
+    var currentUserRole = "普通成员";
+    var currentUserPermissions = [];
+    var isInitialLoading = true;
+    var systemConfig = { logo_text: '📦 PM_SYSTEM', system_name: '项目管理系统', logo_url: '' };
+    var userPreferences = { language: 'zh', theme: 'light' };
+
+    // --- 通用函数 ---
+    function loadSystemConfig() {
+        fetch(API_BASE+'/api/config/').then(r=>r.json()).then(r=>{if(r.code==='SUCCESS'){systemConfig=r.data;applySystemConfig();}}).catch(e=>console.error);
+    }
+    function applySystemConfig() {
+        if(systemConfig.logo_url){
+            var img=document.getElementById('logoImage'),txt=document.getElementById('logoText');
+            if(img&&txt){
+                img.src=systemConfig.logo_url+'?t='+new Date().getTime();
+                img.style.display='block';
+                txt.style.display='none';
+            }
+        }else{
+            var img2=document.getElementById('logoImage'),txt2=document.getElementById('logoText');
+            if(img2&&txt2){
+                img2.style.display='none';
+                txt2.style.display='block';
+                txt2.innerHTML=systemConfig.logo_text||'📦 PM_SYSTEM';
+            }
+        }
+        document.title=systemConfig.system_name||'项目管理系统';
+    }
+    function loadUserPreferences(){
+        var saved=localStorage.getItem('pm_user_preferences');
+        if(saved){try{userPreferences=JSON.parse(saved);}catch(e){}}
+        if(userPreferences.theme) document.body.setAttribute('data-theme',userPreferences.theme);
+    }
+    function saveUserPreferences(){ localStorage.setItem('pm_user_preferences',JSON.stringify(userPreferences)); }
+    function hasPermission(p){ 
+        if(currentUserRole==='系统管理员') return true; 
+        return currentUserPermissions.indexOf(p)!==-1; 
+    }
+
+    // 管理员操作
+    function executeRepair(){
+        if(confirm('修复数据库结构（不删数据），确定吗？')){
+            fetch('/api/admin/reset-system',{method:'POST',headers:{'Content-Type':'application/json','X-Username':'admin'},body:JSON.stringify({mode:'repair'})})
+            .then(r=>r.json()).then(d=>{alert(d.message||JSON.stringify(d));if(d.code==='SUCCESS')location.reload();})
+            .catch(e=>alert('错误:'+e.message));
+        }
+    }
+    function executeFullReset(){
+        if(confirm('⚠️ 完全重置会删除所有数据，管理员保留。确定吗？') && confirm('再次确认！数据将永久丢失！')){
+            fetch('/api/admin/reset-system',{method:'POST',headers:{'Content-Type':'application/json','X-Username':'admin'},body:JSON.stringify({mode:'full'})})
+            .then(r=>r.json()).then(d=>{alert(d.message);if(d.code==='SUCCESS'){localStorage.removeItem('pm_user_session');location.reload();}})
+            .catch(e=>alert('错误:'+e.message));
+        }
+    }
+
+    function updateAdminMenuVisibility(){
+        var sess=localStorage.getItem('pm_user_session');
+        var isAdmin=false;
+        if(sess){
+            try{var u=JSON.parse(sess); if(u.username==='admin') isAdmin=true;}catch(e){}
+        }
+        if(currentUserId==='admin') isAdmin=true;
+        var container=document.getElementById('adminMenuContainer');
+        if(container) container.style.display=isAdmin?'block':'none';
+    }
+
+    // 打开新建项目弹窗
+    function openCreateProjectModal() {
+        if(!hasPermission('create_project')){
+            alert('权限不足：您没有创建项目的权限');
+            return;
+        }
+        // 加载新建项目弹窗内容
+        fetch('/views/project_create.html')
+            .then(function(res) { return res.text(); })
+            .then(function(html) {
+                // 创建遮罩层和弹窗容器
+                var modalMask = document.createElement('div');
+                modalMask.className = 'global-modal-mask';
+                modalMask.id = 'globalModalMask';
+                modalMask.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; min-width: 500px;">' + html + '</div>';
+                document.body.appendChild(modalMask);
+                
+                // 绑定关闭函数到全局
+                window.closeGlobalModal = function() {
+                    var mask = document.getElementById('globalModalMask');
+                    if(mask) mask.remove();
+                };
+                
+                // 执行弹窗内的初始化脚本
+                var scripts = modalMask.querySelectorAll('script');
+                for(var i = 0; i < scripts.length; i++) {
+                    var newScript = document.createElement('script');
+                    if(scripts[i].src) {
+                        newScript.src = scripts[i].src;
+                    } else {
+                        newScript.textContent = scripts[i].textContent;
+                    }
+                    document.body.appendChild(newScript);
+                }
+            })
+            .catch(function(err) {
+                console.error('加载新建项目弹窗失败:', err);
+                alert('加载新建项目表单失败，请刷新页面重试');
+            });
+    }
+
+    // 刷新项目列表（供弹窗调用）
+    window.refreshProjectList = function() {
+        var currentView = localStorage.getItem('pm_current_sub_view');
+        if(currentView === 'p-list') {
+            renderContent('p-list');
+        }
+    };
+
+    function executeLogin(){
+        var u=document.getElementById('login-username').value,p=document.getElementById('login-password').value;
+        if(!u||!p){alert('请输入账号密码');return;}
+        fetch(API_BASE+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})})
+        .then(r=>r.json()).then(res=>{
+            if(res.code==='SUCCESS'){
+                currentUserId=res.username;
+                // 根据返回的权限和角色设置
+                if(res.username==='admin' || res.role==='admin'){
+                    currentUserRole='系统管理员';
+                    currentUserPermissions=['create_project','delete_project','create_task','delete_task','audit_flow','manage_users','view_all_projects','system_settings'];
+                }else{
+                    currentUserRole='普通成员';
+                    currentUserPermissions=res.permissions || [];
+                }
+                document.getElementById('user-badge').innerText=res.name+' ('+currentUserRole+')';
+                document.getElementById('login-page').classList.add('hidden');
+                document.getElementById('main-dashboard').classList.remove('hidden');
+                localStorage.setItem('pm_user_session',JSON.stringify({username:res.username,role:currentUserRole,name:res.name,permissions:currentUserPermissions}));
+                updateAdminMenuVisibility();
+                switchTab('dashboard');
+            }else alert('登录失败:'+(res.detail||'未知错误'));
+        }).catch(e=>alert('网络错误:'+e.message));
+    }
+
+    // 绑定登录表单回车事件
+    function bindLoginEnterEvent() {
+        var usernameInput = document.getElementById('login-username');
+        var passwordInput = document.getElementById('login-password');
+        
+        function onEnter(e) {
+            if(e.key === 'Enter') {
+                e.preventDefault();
+                executeLogin();
+            }
+        }
+        
+        if(usernameInput) usernameInput.addEventListener('keypress', onEnter);
+        if(passwordInput) passwordInput.addEventListener('keypress', onEnter);
+    }
+
+    function handleLogout(){
+        localStorage.removeItem('pm_user_session');
+        localStorage.removeItem('pm_current_tab');
+        localStorage.removeItem('pm_current_sub_view');
+        window.location.reload();
+    }
+
+    function switchTab(tabName){
+        if(!isInitialLoading) localStorage.setItem('pm_current_tab',tabName);
+        var dc=document.getElementById('main-dashboard');
+        if(tabName==='dashboard') dc.classList.add('hide-sidebar'); else dc.classList.remove('hide-sidebar');
+        ['dashboard','project','task','setting'].forEach(function(t){
+            var btn=document.getElementById('nav-'+t);
+            if(btn) btn.classList.toggle('active',t===tabName);
+        });
+        var sub=document.getElementById('sub-menu-container'); if(!sub) return;
+        var target=localStorage.getItem('pm_current_sub_view')||'';
+        if(tabName==='dashboard'){
+            document.querySelector('.aside-title').innerText='数据看板';
+            sub.innerHTML='';
+            renderContent('dashboard');
+        }else if(tabName==='project'){
+            document.querySelector('.aside-title').innerText='项目管理菜单';
+            // 根据权限决定是否显示新建项目按钮
+            var createBtnHtml = hasPermission('create_project') ? 
+                '<button id="sub-p-create" class="sub-btn">➕ 新建项目</button>' : 
+                '';
+            sub.innerHTML = '<button id="sub-p-list" class="sub-btn">📁 项目列表</button>' + 
+                createBtnHtml + 
+                '<button id="sub-p-archive" class="sub-btn">📦 项目归档</button>' + 
+                '<button id="sub-p-search" class="sub-btn">🔍 搜索项目</button>';
+            if(target.indexOf('p-')===0) renderContent(target); else renderContent('p-list');
+        }else if(tabName==='task'){
+            document.querySelector('.aside-title').innerText='任务管理菜单';
+            sub.innerHTML='<button id="sub-t-all" class="sub-btn">📋 全部任务</button><button id="sub-t-my" class="sub-btn">👤 我的任务</button><button id="sub-t-completed" class="sub-btn">✅ 已完成</button>';
+            if(target.indexOf('t-')===0) renderContent(target); else renderContent('t-all');
+        }else if(tabName==='setting'){
+            document.querySelector('.aside-title').innerText='系统配置菜单';
+            // 根据权限决定是否显示用户管理
+            var userManageHtml = hasPermission('manage_users') ? 
+                '<button id="sub-s-user" class="sub-btn">👥 用户管理</button>' : '';
+            sub.innerHTML = '<button id="sub-s-base" class="sub-btn">⚙️ 系统设置</button>' + userManageHtml;
+            if(target.indexOf('s-')===0) renderContent(target); else renderContent('s-base');
+        }
+    }
+
+    function loadView(url,cb){
+        fetch(url).then(r=>r.text()).then(html=>{
+            document.getElementById('main-content-view').innerHTML=html;
+            var scripts=document.getElementById('main-content-view').querySelectorAll('script');
+            for(var i=0;i<scripts.length;i++){var ns=document.createElement('script');if(scripts[i].src) ns.src=scripts[i].src;else ns.textContent=scripts[i].textContent;document.body.appendChild(ns);}
+            if(url.indexOf('dashboard.html')!==-1) setTimeout(function(){window.dispatchEvent(new CustomEvent('dashboard-reloaded'));},100);
+            if(cb)cb();
+        }).catch(e=>{document.getElementById('main-content-view').innerHTML='<div class="content-block" style="color:red;">加载失败:'+e.message+'</div>';});
+    }
+
+    function renderContent(viewType){
+        if(viewType==='s-user' && !hasPermission('manage_users')){alert('权限不足');return;}
+        localStorage.setItem('pm_current_sub_view',viewType);
+        var btns=document.querySelectorAll('.sub-btn');
+        for(var i=0;i<btns.length;i++) btns[i].classList.remove('active');
+        var activeSub=document.getElementById('sub-'+viewType);
+        if(activeSub) activeSub.classList.add('active');
+        switch(viewType){
+            case 'dashboard': loadView('/views/dashboard.html');break;
+            case 'p-list': loadView('/views/p-list.html');break;
+            case 'p-archive': loadView('/views/p-archive.html');break;
+            case 'p-search': loadView('/views/p-search.html');break;
+            case 's-user': loadView('/views/user_management.html');break;
+            case 't-all': loadView('/views/task_center.html',function(){if(window.setTaskView) window.setTaskView('all');});break;
+            case 't-my': loadView('/views/task_center.html',function(){if(window.setTaskView) window.setTaskView('my');});break;
+            case 't-completed': loadView('/views/task_center.html',function(){if(window.setTaskView) window.setTaskView('completed');});break;
+            case 's-base': loadSystemSettingsPage();break;
+            default: document.getElementById('main-content-view').innerHTML='<div>开发中</div>';
+        }
+    }
+
+    function loadSystemSettingsPage(){
+        // 简化版系统设置（仅保留语言/主题，管理员维护按钮已经在上方菜单中，这里不需要再重复）
+        var canEditSystem = hasPermission('system_settings') || currentUserId === 'admin';
+        var systemNameDisabled = !canEditSystem ? 'disabled' : '';
+        var saveBtnDisabled = !canEditSystem ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';
+        
+        var html='<div class="page-header"><h2 class="page-title">⚙️ 系统设置</h2><p class="page-desc">配置系统外观和语言</p></div>'+
+            '<div class="content-block"><div class="form-group"><label>🏷️ 系统名称</label><input type="text" id="systemNameInput" '+systemNameDisabled+' value="'+escapeHtml(systemConfig.system_name||'项目管理系统')+'" style="width:100%; padding:10px;"></div>'+
+            '<div class="form-group"><label>🖼️ 自定义 Logo</label><div id="logoUploadArea" class="logo-upload-area" style="border:2px dashed #ccc; padding:20px; text-align:center; cursor:pointer;">📁 点击上传 Logo 图片<br><small>推荐尺寸：400x120 像素</small></div></div>'+
+            '<button class="btn" id="saveSystemConfigBtn" '+saveBtnDisabled+' style="width:auto;padding:8px 20px;">💾 保存系统名称</button>'+
+            '<div class="settings-group"><div class="settings-group-title">🎨 个人偏好</div>'+
+            '<div class="form-group"><label>🌐 语言</label><select id="languageSelect"><option value="zh">中文</option><option value="en">English</option></select></div>'+
+            '<div class="form-group"><label>🎨 主题</label><select id="themeSelect"><option value="light">亮色</option><option value="dark">暗色</option><option value="auto">跟随系统</option></select></div>'+
+            '<button class="btn" id="saveUserPrefsBtn" style="width:auto;padding:8px 20px;">💾 保存偏好</button></div></div>';
+        document.getElementById('main-content-view').innerHTML=html;
+        
+        var uploadArea = document.getElementById('logoUploadArea');
+        if(uploadArea && canEditSystem) {
+            uploadArea.addEventListener('click',function(){
+                var inp=document.createElement('input'); inp.type='file'; inp.accept='image/png,image/jpeg,image/jpg,image/svg+xml';
+                inp.onchange=function(e){if(e.target.files[0]) uploadLogo(e.target.files[0]);};
+                inp.click();
+            });
+        } else if(uploadArea && !canEditSystem) {
+            uploadArea.style.cursor = 'not-allowed';
+            uploadArea.style.opacity = '0.5';
+        }
+        
+        var saveBtn = document.getElementById('saveSystemConfigBtn');
+        if(saveBtn && canEditSystem) {
+            saveBtn.addEventListener('click',function(){
+                var newName=document.getElementById('systemNameInput').value;
+                saveSystemConfig(newName,function(success){if(success){alert('保存成功，刷新');location.reload();}});
+            });
+        }
+        
+        document.getElementById('saveUserPrefsBtn')?.addEventListener('click',function(){
+            userPreferences.language=document.getElementById('languageSelect').value;
+            userPreferences.theme=document.getElementById('themeSelect').value;
+            saveUserPreferences(); document.body.setAttribute('data-theme',userPreferences.theme);
+            alert('个人偏好保存成功');
+        });
+        document.getElementById('languageSelect').value=userPreferences.language||'zh';
+        document.getElementById('themeSelect').value=userPreferences.theme||'light';
+    }
+
+    function saveSystemConfig(systemName,callback){
+        var username = localStorage.getItem('pm_user_session')?JSON.parse(localStorage.getItem('pm_user_session')).username:'';
+        fetch(API_BASE+'/api/config/',{
+            method:'POST',headers:{'Content-Type':'application/json','X-Username':username},
+            body:JSON.stringify({system_name:systemName})
+        }).then(r=>r.json()).then(r=>{if(r.code==='SUCCESS')callback(true); else alert('保存失败:'+r.detail); callback(false);}).catch(e=>alert('网络错误'));
+    }
+    
+    function uploadLogo(file){
+        var fd=new FormData(); fd.append('file',file);
+        var username=localStorage.getItem('pm_user_session')?JSON.parse(localStorage.getItem('pm_user_session')).username:'';
+        fetch(API_BASE+'/api/config/upload-logo',{method:'POST',headers:{'X-Username':username},body:fd})
+        .then(r=>r.json()).then(r=>{if(r.code==='SUCCESS'){alert('Logo上传成功，页面刷新');location.reload();}else alert('上传失败:'+r.detail);})
+        .catch(e=>alert('网络错误'));
+    }
+
+    function escapeHtml(str){if(!str) return ''; return String(str).replace(/[&<>]/g,function(m){if(m==='&')return '&amp;';if(m==='<')return '&lt;';if(m==='>')return '&gt;';return m;});}
+
+    // 事件绑定
+    document.addEventListener('click',function(e){
+        var id=e.target.id;
+        if(id==='login-submit-btn') executeLogin();
+        else if(id==='nav-dashboard') switchTab('dashboard');
+        else if(id==='nav-project') switchTab('project');
+        else if(id==='nav-task') switchTab('task');
+        else if(id==='nav-setting') switchTab('setting');
+        else if(id==='logout-trigger-btn') handleLogout();
+        else if(id==='sub-p-list') renderContent('p-list');
+        else if(id==='sub-p-create') openCreateProjectModal();
+        else if(id==='sub-p-archive') renderContent('p-archive');
+        else if(id==='sub-p-search') renderContent('p-search');
+        else if(id==='sub-t-all') renderContent('t-all');
+        else if(id==='sub-t-my') renderContent('t-my');
+        else if(id==='sub-t-completed') renderContent('t-completed');
+        else if(id==='sub-s-base') renderContent('s-base');
+        else if(id==='sub-s-user') renderContent('s-user');
+        else if(id==='adminMenuBtn'){
+            var dropdown=document.getElementById('adminDropdown');
+            if(dropdown) dropdown.classList.toggle('show');
+        }else if(id==='repairDbBtn') executeRepair();
+        else if(id==='fullResetBtn') executeFullReset();
+        else{
+            var dropdown=document.getElementById('adminDropdown');
+            if(dropdown && !e.target.closest('.admin-menu')) dropdown.classList.remove('show');
+        }
+    });
+
+    window.addEventListener('DOMContentLoaded',function(){
+        loadSystemConfig(); loadUserPreferences();
+        // 绑定登录表单回车事件
+        bindLoginEnterEvent();
+        
+        var saved=localStorage.getItem('pm_user_session');
+        if(saved){
+            try{var user=JSON.parse(saved);
+                if(user.username==='admin') {
+                    currentUserRole='系统管理员';
+                    currentUserPermissions=['create_project','delete_project','create_task','delete_task','audit_flow','manage_users','view_all_projects','system_settings'];
+                } else {
+                    currentUserRole='普通成员';
+                    currentUserPermissions=user.permissions||[];
+                }
+                currentUserId=user.username;
+                document.getElementById('user-badge').innerText=user.name+' ('+currentUserRole+')';
+                document.getElementById('login-page').classList.add('hidden');
+                document.getElementById('main-dashboard').classList.remove('hidden');
+                updateAdminMenuVisibility();
+                switchTab('dashboard');
+            }catch(e){localStorage.removeItem('pm_user_session');}
+        }
+    });
+</script>
+</body>
+</html>

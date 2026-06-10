@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>系统信息仪表盘</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #f8fafc; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            padding: 0; 
+        }
+        .dashboard-container {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            padding: 20px 24px;
+            width: 100%;
+            min-height: calc(100vh - 40px);
+        }
+        /* 左侧统计区 - 使用 flex 布局让三个图表紧凑排列 */
+        .stats-sidebar {
+            flex: 0 0 320px;
+            min-width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .logs-main {
+            flex: 1;
+            min-width: 500px;
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        /* 统计卡片 - 更紧凑的样式 */
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+        .card h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #0f172a;
+            border-left: 3px solid #2563eb;
+            padding-left: 10px;
+        }
+        /* 图表容器 - 更小更紧凑 */
+        .chart-container {
+            height: 160px;
+            width: 100%;
+        }
+        .logs-header {
+            padding: 12px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+            font-weight: 600;
+            color: #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .logs-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .refresh-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .refresh-btn:hover {
+            background: #1d4ed8;
+        }
+        .refresh-btn:active {
+            transform: scale(0.98);
+        }
+        .logs-table {
+            width: 100%;
+            border-collapse: collapse;
+            flex: 1;
+        }
+        .logs-table th, .logs-table td {
+            padding: 10px 16px;
+            text-align: left;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 13px;
+        }
+        .logs-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #334155;
+            position: sticky;
+            top: 0;
+        }
+        .logs-table tr:hover {
+            background: #f8fafc;
+        }
+        .pagination {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+        }
+        .pagination button {
+            background: white;
+            border: 1px solid #cbd5e1;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .pagination button:hover {
+            background: #f1f5f9;
+        }
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+        .error {
+            color: #dc2626;
+            text-align: center;
+            padding: 20px;
+        }
+        .logs-scroll {
+            overflow-y: auto;
+            flex: 1;
+            max-height: 500px;
+        }
+        .loading-small {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e2e8f0;
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .refresh-status {
+            font-size: 12px;
+            color: #10b981;
+            margin-left: 12px;
+        }
+        .total-count {
+            font-size: 12px;
+            color: #64748b;
+            margin-left: 16px;
+        }
+        
+        /* 响应式布局 */
+        @media (max-width: 900px) {
+            .dashboard-container {
+                flex-direction: column;
+            }
+            .stats-sidebar {
+                flex: auto;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 16px;
+            }
+            .chart-container {
+                height: 150px;
+            }
+            .logs-main {
+                min-width: auto;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .dashboard-container {
+                padding: 12px;
+            }
+            .stats-sidebar {
+                grid-template-columns: 1fr;
+            }
+            .logs-table th, .logs-table td {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <!-- 左侧统计区 - 紧凑布局 -->
+    <div class="stats-sidebar">
+        <div class="card">
+            <h3>📊 项目统计</h3>
+            <div id="projChart" class="chart-container"></div>
+        </div>
+        <div class="card">
+            <h3>📋 所有任务统计</h3>
+            <div id="taskChart" class="chart-container"></div>
+        </div>
+        <div class="card">
+            <h3>👤 我的任务统计</h3>
+            <div id="myTaskChart" class="chart-container"></div>
+        </div>
+    </div>
+
+    <div class="logs-main">
+        <div class="logs-header">
+            <span>📝 操作日志时间线</span>
+            <div class="logs-controls">
+                <button id="manualRefreshBtn" class="refresh-btn">🔄 手动刷新</button>
+                <span id="refreshStatus" class="refresh-status"></span>
+                <span id="totalCount" class="total-count"></span>
+            </div>
+        </div>
+        <div class="logs-scroll">
+            <table class="logs-table">
+                <thead>
+                    <tr><th>操作人</th><th>操作类型</th><th>目标类型</th><th>目标名称</th><th>详情</th><th>时间</th></tr>
+                </thead>
+                <tbody id="logsTbody">
+                    <tr><td colspan="6" class="loading">加载操作日志中...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="pagination" id="pagination"></div>
+    </div>
+</div>
+
+<script>
+    let allLogs = [];
+    let currentPage = 1;
+    let totalPages = 1;
+    let isLoading = false;
+    let eventSource = null;
+    let charts = {};
+    const PAGE_SIZE = 15;
+
+    // 初始化仪表盘（可重复调用）
+    function initDashboard() {
+        loadStats();
+        loadAllLogs(true);
+    }
+
+    window.addEventListener('resize', function() {
+        for (let key in charts) {
+            if (charts[key]) {
+                charts[key].resize();
+            }
+        }
+    });
+
+    function showRefreshStatus(msg, isError = false) {
+        const statusEl = document.getElementById('refreshStatus');
+        if (statusEl) {
+            statusEl.innerHTML = msg;
+            statusEl.style.color = isError ? '#dc2626' : '#10b981';
+            setTimeout(() => {
+                if (statusEl.innerHTML === msg) {
+                    statusEl.innerHTML = '';
+                }
+            }, 2000);
+        }
+    }
+
+    function updateTotalCount() {
+        const countEl = document.getElementById('totalCount');
+        if (countEl) {
+            countEl.innerHTML = `共 ${allLogs.length} 条日志`;
+        }
+    }
+
+    function getCurrentUser() {
+        const session = localStorage.getItem('pm_user_session');
+        if (session) {
+            try {
+                return JSON.parse(session).username;
+            } catch(e) { return null; }
+        }
+        return null;
+    }
+
+    function loadStats() {
+        const username = getCurrentUser();
+        let url = '/api/stats/overview';
+        if (username) url += `?username=${encodeURIComponent(username)}`;
+        fetch(url)
+            .then(res => res.json())
+            .then(res => {
+                if (res.code === 'SUCCESS') {
+                    const data = res.data;
+                    renderDonut('projChart', data.projects);
+                    renderDonut('taskChart', data.all_tasks);
+                    renderDonut('myTaskChart', data.my_tasks);
+                } else {
+                    console.error('统计加载失败', res.detail);
+                }
+            })
+            .catch(err => console.error('统计加载错误:', err));
+    }
+
+    function renderDonut(containerId, stats) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        if (charts[containerId]) {
+            charts[containerId].dispose();
+        }
+        
+        const total = stats.total || 0;
+        const completed = stats.completed || 0;
+        const inProgress = stats.in_progress || 0;
+        const delayed = stats.delayed || 0;
+        const other = Math.max(0, total - completed - inProgress - delayed);
+        
+        const chart = echarts.init(container);
+        charts[containerId] = chart;
+        
+        const option = {
+            tooltip: { trigger: 'item', formatter: '{b}: {d}% ({c})' },
+            legend: { 
+                orient: 'horizontal', 
+                left: 'center',
+                bottom: 0,
+                itemWidth: 20,
+                itemHeight: 12,
+                textStyle: { fontSize: 10 },
+                data: ['已完成', '进行中', '延误中', '其他']
+            },
+            series: [{
+                type: 'pie',
+                radius: ['45%', '65%'],
+                center: ['50%', '45%'],
+                avoidLabelOverlap: false,
+                label: { show: false },
+                emphasis: { scale: true, label: { show: true } },
+                data: [
+                    { value: completed, name: '已完成', itemStyle: { color: '#10b981' } },
+                    { value: inProgress, name: '进行中', itemStyle: { color: '#3b82f6' } },
+                    { value: delayed, name: '延误中', itemStyle: { color: '#ef4444' } },
+                    { value: other, name: '其他', itemStyle: { color: '#cbd5e1' } }
+                ]
+            }],
+            graphic: {
+                type: 'text',
+                left: 'center',
+                top: '45%',
+                style: { 
+                    text: total.toString(), 
+                    fill: '#0f172a', 
+                    fontSize: 18, 
+                    fontWeight: 'bold' 
+                },
+                z: 100
+            }
+        };
+        chart.setOption(option);
+    }
+
+    async function fetchAllLogs() {
+        let allData = [];
+        let current = 1;
+        const pageSize = 100;
+        let hasMore = true;
+        
+        while (hasMore) {
+            try {
+                const response = await fetch(`/api/logs/?page=${current}&page_size=${pageSize}`);
+                const res = await response.json();
+                
+                if (res.code === 'SUCCESS') {
+                    const logs = res.data || [];
+                    allData = allData.concat(logs);
+                    if (logs.length < pageSize) {
+                        hasMore = false;
+                    } else {
+                        current++;
+                    }
+                } else {
+                    console.error('获取日志失败:', res);
+                    hasMore = false;
+                }
+            } catch (err) {
+                console.error('获取日志错误:', err);
+                hasMore = false;
+            }
+        }
+        
+        return allData;
+    }
+
+    async function loadAllLogs(showLoading = true) {
+        if (isLoading) {
+            showRefreshStatus('正在刷新中，请稍候...');
+            return;
+        }
+        isLoading = true;
+        
+        if (showLoading) {
+            const tbody = document.getElementById('logsTbody');
+            tbody.innerHTML = '<tr><td colspan="6" class="loading"><span class="loading-small"></span> 加载操作日志中...</td></tr>';
+        }
+        
+        try {
+            allLogs = await fetchAllLogs();
+            console.log(`已加载 ${allLogs.length} 条日志`);
+            updateTotalCount();
+            currentPage = 1;
+            renderLogsPage();
+        } catch (err) {
+            console.error('加载日志错误:', err);
+            if (showLoading) {
+                const tbody = document.getElementById('logsTbody');
+                tbody.innerHTML = `<tr><td colspan="6" class="error">加载失败: ${escapeHtml(err.message)}</td></tr>`;
+            }
+        } finally {
+            isLoading = false;
+        }
+    }
+    
+    function renderLogsPage() {
+        const tbody = document.getElementById('logsTbody');
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const end = start + PAGE_SIZE;
+        const pageLogs = allLogs.slice(start, end);
+        
+        if (pageLogs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="loading">暂无操作记录</td></tr>';
+        } else {
+            let html = '';
+            for (const log of pageLogs) {
+                let actionText = '';
+                switch (log.action) {
+                    case 'create_project': actionText = '创建项目'; break;
+                    case 'delete_project': actionText = '删除项目'; break;
+                    case 'create_task': actionText = '创建任务'; break;
+                    case 'complete_task': actionText = '完成任务'; break;
+                    case 'delete_task': actionText = '删除任务'; break;
+                    case 'start_task': actionText = '开始任务'; break;
+                    case 'review_task_approve': actionText = '审核通过'; break;
+                    case 'review_task_reject': actionText = '审核退回'; break;
+                    case 'upload_image': actionText = '上传图片'; break;
+                    case 'delete_image': actionText = '删除图片'; break;
+                    case 'start_project': actionText = '启动项目'; break;
+                    case 'pause_project': actionText = '暂停项目'; break;
+                    default: actionText = log.action || '未知操作';
+                }
+                html += `<tr>
+                    <td>${escapeHtml(log.operator)}</td>
+                    <td>${escapeHtml(actionText)}</td>
+                    <td>${escapeHtml(log.target_type)}</td>
+                    <td>${escapeHtml(log.target_name)}</td>
+                    <td>${escapeHtml(log.details || '')}</td>
+                    <td>${escapeHtml(log.created_at)}</td>
+                </tr>`;
+            }
+            tbody.innerHTML = html;
+        }
+        
+        totalPages = Math.max(1, Math.ceil(allLogs.length / PAGE_SIZE));
+        renderPagination();
+    }
+    
+    function renderPagination() {
+        const container = document.getElementById('pagination');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        if (totalPages <= 1) return;
+        
+        const prevBtn = document.createElement('button');
+        prevBtn.textContent = '上一页';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderLogsPage();
+            }
+        };
+        container.appendChild(prevBtn);
+        
+        const pageInfo = document.createElement('span');
+        pageInfo.textContent = `第 ${currentPage} / ${totalPages} 页`;
+        pageInfo.style.margin = '0 12px';
+        container.appendChild(pageInfo);
+        
+        const nextBtn = document.createElement('button');
+        nextBtn.textContent = '下一页';
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.onclick = () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderLogsPage();
+            }
+        };
+        container.appendChild(nextBtn);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    async function manualRefresh() {
+        showRefreshStatus('🔄 正在刷新数据...');
+        try {
+            await loadAllLogs(true);
+            loadStats();
+            showRefreshStatus('✅ 刷新完成');
+        } catch (err) {
+            showRefreshStatus('❌ 刷新失败', true);
+        }
+    }
+
+    function setupEventSource() {
+        if (eventSource) {
+            eventSource.close();
+        }
+        
+        try {
+            eventSource = new EventSource('/api/events/listen');
+            
+            eventSource.onopen = function() {
+                console.log('SSE 连接已建立');
+            };
+            
+            eventSource.onmessage = function(event) {
+                console.log('收到事件:', event.data);
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'log_created' || data.type === 'data_changed') {
+                        showRefreshStatus('📡 检测到新事件，自动更新...');
+                        loadAllLogs(false);
+                        loadStats();
+                    }
+                } catch (e) {
+                    console.error('解析事件数据失败:', e);
+                }
+            };
+            
+            eventSource.onerror = function(error) {
+                console.error('SSE 连接错误:', error);
+                if (eventSource) {
+                    eventSource.close();
+                    eventSource = null;
+                }
+                setTimeout(() => {
+                    if (!eventSource) {
+                        setupEventSource();
+                    }
+                }, 5000);
+            };
+        } catch (e) {
+            console.error('创建 SSE 连接失败:', e);
+        }
+    }
+
+    // 监听仪表盘重新加载事件（从 index.html 触发）
+    window.addEventListener('dashboard-reloaded', function() {
+        console.log('仪表盘重新加载事件触发，刷新数据...');
+        initDashboard();
+    });
+
+    // 初始化
+    initDashboard();
+    setupEventSource();
+
+    // 绑定刷新按钮
+    const refreshBtn = document.getElementById('manualRefreshBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', manualRefresh);
+    }
+
+    window.addEventListener('beforeunload', function() {
+        if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+        }
+        for (let key in charts) {
+            if (charts[key]) {
+                charts[key].dispose();
+            }
+        }
+    });
+</script>
+</body>
+</html>

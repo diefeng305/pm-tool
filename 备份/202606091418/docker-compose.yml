@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # MySQL 数据库服务
+  pm-db:
+    image: mysql:8.0
+    container_name: pm_mysql_container
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secure_pass_2026
+      MYSQL_DATABASE: pm_database
+      MYSQL_USER: pm_worker
+      MYSQL_PASSWORD: pm_worker_password_998
+    ports:
+      - "3306:3306"
+    volumes:
+      - pm_db_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql  # 自动执行初始化 SQL
+    networks:
+      - pm_network
+
+  # 后端 FastAPI 服务
+  pm-backend:
+    build: ./backend
+    container_name: pm_backend_container
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=pm-db
+      - DB_NAME=pm_database
+      - DB_USER=pm_worker
+      - DB_PASSWORD=pm_worker_password_998
+    volumes:
+      - ./backend:/app
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    depends_on:
+      - pm-db
+    networks:
+      - pm_network
+
+volumes:
+  pm_db_data:
+
+networks:
+  pm_network:
+    driver: bridge

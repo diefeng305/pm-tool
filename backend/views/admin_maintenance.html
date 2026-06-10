@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>系统维护工具 - 仅管理员</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f1f5f9;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        h2 { color: #0f172a; margin-top: 0; }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 12px;
+        }
+        button.danger { background: #dc2626; }
+        button.warning { background: #f59e0b; }
+        .result {
+            margin-top: 20px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        hr { margin: 20px 0; }
+        .note {
+            background: #fef9c3;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #854d0e;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>🔧 数据库维护与重置</h2>
+        <p><strong>当前用户: <span id="currentUser">加载中...</span></strong></p>
+        <p>此工具仅限管理员使用，请谨慎操作。</p>
+        <button id="repairBtn" class="warning">🔧 修复数据库结构（不删数据）</button>
+        <button id="resetBtn" class="danger">⚠️ 完全重置系统（清空所有数据）</button>
+        <div id="result" class="result"></div>
+    </div>
+    <div class="card">
+        <h3>📖 操作说明</h3>
+        <ul>
+            <li><strong>修复数据库结构</strong>：仅添加缺失的表和字段，<strong>不会影响任何现有数据</strong>，用于升级或修复数据库。</li>
+            <li><strong>完全重置系统</strong>：<strong class="danger">删除所有表并重建</strong>，所有项目、任务、用户（除 admin 外）全部清空，系统恢复初始状态。<strong>操作前请务必确认已备份！</strong></li>
+        </ul>
+        <div class="note">
+            💡 如果点击按钮后没有任何反应，请检查浏览器控制台是否有错误，或确认您已使用 <strong>admin</strong> 账户登录。
+        </div>
+    </div>
+
+    <script>
+        // 显示当前登录用户（从 localStorage 读取）
+        try {
+            const session = localStorage.getItem('pm_user_session');
+            if (session) {
+                const user = JSON.parse(session);
+                document.getElementById('currentUser').innerText = `${user.username} (${user.role || '未知角色'})`;
+                if (user.username !== 'admin') {
+                    document.getElementById('currentUser').innerHTML += ' ⚠️ 非管理员账户，操作可能失败！';
+                }
+            } else {
+                document.getElementById('currentUser').innerText = '未登录，请先登录';
+            }
+        } catch(e) {
+            console.error(e);
+        }
+
+        function showResult(msg, isError = false) {
+            const div = document.getElementById('result');
+            div.innerHTML = msg;
+            div.style.color = isError ? '#dc2626' : '#10b981';
+            setTimeout(() => {
+                div.innerHTML = '';
+            }, 5000);
+        }
+
+        async function callApi(mode) {
+            // 直接从 localStorage 获取用户名作为身份标识
+            let username = 'admin';
+            try {
+                const session = localStorage.getItem('pm_user_session');
+                if (session) {
+                    const user = JSON.parse(session);
+                    username = user.username;
+                }
+            } catch(e) {}
+            
+            if (username !== 'admin') {
+                showResult('❌ 权限不足：只有管理员可以执行此操作', true);
+                return;
+            }
+
+            const btn = (mode === 'repair') ? document.getElementById('repairBtn') : document.getElementById('resetBtn');
+            const originalText = btn.innerText;
+            btn.innerText = '执行中...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/admin/reset-system', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Username': username
+                    },
+                    body: JSON.stringify({ mode: mode })
+                });
+                const data = await response.json();
+                if (data.code === 'SUCCESS') {
+                    showResult('✅ ' + data.message);
+                    if (mode === 'full') {
+                        setTimeout(() => {
+                            localStorage.removeItem('pm_user_session');
+                            window.location.href = '/';
+                        }, 2000);
+                    }
+                } else {
+                    showResult('❌ 操作失败: ' + (data.detail || '未知错误'), true);
+                }
+            } catch (err) {
+                showResult('❌ 网络错误: ' + err.message, true);
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        document.getElementById('repairBtn').addEventListener('click', () => {
+            if (confirm('此操作将修复数据库结构，不会删除任何现有数据。确定要继续吗？')) {
+                callApi('repair');
+            }
+        });
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            if (confirm('⚠️ 危险：这将删除所有数据（除管理员外），系统将恢复初始状态。确定吗？') &&
+                confirm('再次确认！数据将永久丢失！')) {
+                callApi('full');
+            }
+        });
+    </script>
+</body>
+</html>
