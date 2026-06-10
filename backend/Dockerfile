@@ -1,17 +1,28 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# 安装 Pillow 需要的系统依赖
-RUN apt-get update && apt-get install -y \
-    libjpeg-dev \
-    zlib1g-dev \
-    libpng-dev \
+# 安装系统依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    default-libmysqlclient-dev \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
+# 复制依赖文件并安装
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# 复制后端代码
+COPY *.py ./
+COPY views/ ./views/
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# 创建上传目录
+RUN mkdir -p upload/images upload/logo
+
+# 暴露端口
+EXPOSE 8000
+
+# 启动命令
+CMD ["sh", "-c", "sleep 5 && uvicorn main:app --host 0.0.0.0 --port 8000"]
+EOF
