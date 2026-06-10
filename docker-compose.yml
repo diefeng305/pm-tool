@@ -22,9 +22,9 @@ services:
       timeout: 5s
       retries: 5
 
-  # 后端 FastAPI 服务
+  # 后端 FastAPI 服务（使用 Docker Hub 镜像）
   pm-backend:
-    build: ./backend
+    image: YOUR_DOCKER_USERNAME/pm-backend:latest  # 替换为你的 Docker Hub 用户名
     container_name: pm_backend_container
     restart: always
     ports:
@@ -36,8 +36,7 @@ services:
       - DB_USER=pm_worker
       - DB_PASSWORD=pm_worker_password_998
     volumes:
-      - ./backend:/app
-    command: ["sh", "-c", "sleep 5 && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"]
+      - ./upload:/app/upload  # 持久化上传的文件
     depends_on:
       pm-db:
         condition: service_healthy
