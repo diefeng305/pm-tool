@@ -21,13 +21,20 @@
 
 ## 快速启动
 
-```bash
-# 克隆项目
-git clone https://github.com/您的用户名/project-management-system.git
-cd project-management-system
+下载源码放到指定你指定目录
 
 # 启动服务
 docker compose up -d
 
+注:在飞牛中启动服务时，会因为无法拉取python:3.10-slim依赖而启动失败，解决的办法是用root帐号来启动。具体原因不明，需要问飞牛开发团队。
+
+或者临时用官方源先拉取：docker pull docker.io/library/python:3.10-slim
+
+备用命令清除缓存重新构建：docker compose down -v && docker compose build --no-cache && docker compose up -d && docker compose logs -f pm-backend
+
 # 访问系统
 http://localhost:8000
+
+默认管理员:admin  密码:admin123
+
+其它用户及权限管理员可自行添加。
