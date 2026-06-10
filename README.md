@@ -21,13 +21,12 @@
 
 ## 快速启动
 
-```bash
-# 克隆项目
-git clone https://github.com/您的用户名/project-management-system.git
-cd project-management-system
+下载源码放到指定你指定目录
 
 # 启动服务
 docker compose up -d
 
 # 访问系统
 http://localhost:8000
+默认管理员:admin  密码:admin123
+其它用户及权限管理员可自行添加。
