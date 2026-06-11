@@ -8,11 +8,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY *.py ./
-COPY views/ ./views/
+# 复制所有 backend 目录下的 .py 文件和 index.html
+COPY backend/*.py ./
+COPY backend/index.html ./
+COPY backend/views/ ./views/
 
 RUN mkdir -p upload/images upload/logo
 
