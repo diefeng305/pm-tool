@@ -8,14 +8,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-COPY backend/requirements.txt .
+# 复制依赖文件并安装
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 复制所有 backend 目录下的 .py 文件和 index.html
-COPY backend/*.py ./
-COPY backend/index.html ./
-COPY backend/views/ ./views/
+# 复制所有后端文件（构建上下文是 backend 目录）
+COPY *.py ./
+COPY index.html ./
+COPY views/ ./views/
 
+# 创建上传目录
 RUN mkdir -p upload/images upload/logo
 
 EXPOSE 8000
